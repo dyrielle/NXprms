@@ -5,6 +5,7 @@ from functools import wraps
 import importlib
 import io
 import hashlib
+import os
 from pathlib import Path
 from typing import Any
 
@@ -1458,4 +1459,4 @@ def forecast():
 if __name__ == "__main__":
     with app.app_context():
         initialize_database()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
