@@ -212,8 +212,8 @@ def find_or_create_product(name: str, unit_price: float, qty_seed: int = 0) -> P
     return product
 
 
-def import_inventory_csv(csv_path: str, overwrite_quantities: bool = True) -> tuple[int, int]:
-    df = pd.read_csv(csv_path)
+def import_inventory_csv(csv_source: Any, overwrite_quantities: bool = True) -> tuple[int, int]:
+    df = pd.read_csv(csv_source)
     required = {"ProductName", "quantity", "UnitPrice"}
     if not required.issubset(df.columns):
         raise ValueError("Inventory CSV must contain ProductName, quantity, UnitPrice columns")
@@ -259,8 +259,8 @@ def import_inventory_csv(csv_path: str, overwrite_quantities: bool = True) -> tu
     return created, updated
 
 
-def import_sales_csv(csv_path: str, cashier_id: int) -> tuple[int, int, int]:
-    df = pd.read_csv(csv_path)
+def import_sales_csv(csv_source: Any, cashier_id: int, source_name: str = "sales.csv") -> tuple[int, int, int]:
+    df = pd.read_csv(csv_source)
     required = {"ProductName", "quantity", "UnitPrice", "Date", "Time"}
     if not required.issubset(df.columns):
         raise ValueError("Sales CSV must contain ProductName, quantity, UnitPrice, Date, Time columns")
@@ -268,7 +268,7 @@ def import_sales_csv(csv_path: str, cashier_id: int) -> tuple[int, int, int]:
     imported_sales = 0
     imported_items = 0
     skipped_duplicates = 0
-    source_file = Path(csv_path).name
+    source_file = source_name or "sales.csv"
 
     for idx, row in df.iterrows():
         name = str(row["ProductName"]).strip()
@@ -1240,39 +1240,83 @@ def import_data():
     default_sales = str(Path(__file__).resolve().parents[1] / "LESSONS" / "REPORT" / "ritedose-sales.csv")
 
     if request.method == "POST":
+        import_type = request.form.get("import_type", "both")
         inventory_path = request.form.get("inventory_path", "").strip() or default_inventory
         sales_path = request.form.get("sales_path", "").strip() or default_sales
         overwrite_inventory = request.form.get("overwrite_inventory") == "on"
         reset_sales = request.form.get("reset_sales") == "on"
+        inventory_file = request.files.get("inventory_file")
+        sales_file = request.files.get("sales_file")
 
         try:
-            if reset_sales:
-                SaleItem.query.delete()
-                Sale.query.delete()
+            created = 0
+            updated = 0
+            imported_sales = 0
+            imported_items = 0
+            skipped_duplicates = 0
 
-            created, updated = import_inventory_csv(inventory_path, overwrite_quantities=overwrite_inventory)
-            imported_sales, imported_items, skipped_duplicates = import_sales_csv(
-                sales_path,
-                cashier_id=current_user.id,
-            )
+            if import_type in {"inventory", "both"}:
+                inventory_source: Any
+                inventory_source_label: str
+                if inventory_file and inventory_file.filename:
+                    inventory_source = inventory_file
+                    inventory_source_label = inventory_file.filename
+                else:
+                    inventory_source = inventory_path
+                    inventory_source_label = inventory_path
+
+                created, updated = import_inventory_csv(inventory_source, overwrite_quantities=overwrite_inventory)
+
+            if import_type in {"sales", "both"}:
+                if reset_sales:
+                    SaleItem.query.delete()
+                    Sale.query.delete()
+                    ImportedSaleRow.query.delete()
+
+                sales_source: Any
+                sales_source_label: str
+                if sales_file and sales_file.filename:
+                    sales_source = sales_file
+                    sales_source_label = sales_file.filename
+                else:
+                    sales_source = sales_path
+                    sales_source_label = Path(sales_path).name
+
+                imported_sales, imported_items, skipped_duplicates = import_sales_csv(
+                    sales_source,
+                    cashier_id=current_user.id,
+                    source_name=sales_source_label,
+                )
 
             write_audit(
                 "CSV_IMPORT",
                 (
-                    f"Inventory file={inventory_path}; Sales file={sales_path}; "
+                    f"type={import_type}; Inventory file={inventory_file.filename if inventory_file and inventory_file.filename else inventory_path}; "
+                    f"Sales file={sales_file.filename if sales_file and sales_file.filename else sales_path}; "
                     f"products_created={created}; products_updated={updated}; "
                     f"sales_imported={imported_sales}; items_imported={imported_items}; "
                     f"sales_duplicates_skipped={skipped_duplicates}; reset_sales={reset_sales}"
                 ),
             )
             db.session.commit()
-            flash(
-                (
-                    f"Import successful: {created} new products, {updated} updated products, "
-                    f"{imported_sales} sales rows loaded, {skipped_duplicates} duplicates skipped."
-                ),
-                "success",
-            )
+            if import_type == "inventory":
+                flash(f"Inventory import successful: {created} new products, {updated} updated products.", "success")
+            elif import_type == "sales":
+                flash(
+                    (
+                        f"Sales import successful: {imported_sales} sales rows loaded, "
+                        f"{skipped_duplicates} duplicates skipped."
+                    ),
+                    "success",
+                )
+            else:
+                flash(
+                    (
+                        f"Import successful: {created} new products, {updated} updated products, "
+                        f"{imported_sales} sales rows loaded, {skipped_duplicates} duplicates skipped."
+                    ),
+                    "success",
+                )
             return redirect(url_for("import_data"))
         except Exception as exc:
             db.session.rollback()
@@ -1283,6 +1327,67 @@ def import_data():
         default_inventory=default_inventory,
         default_sales=default_sales,
     )
+
+
+@app.route("/export-dataset/inventory")
+@login_required
+@roles_required("admin")
+def export_dataset_inventory():
+    rows = [
+        {
+            "ProductName": product.name,
+            "quantity": int(product.quantity),
+            "UnitPrice": float(product.unit_price),
+            "SKU": product.sku,
+            "Category": product.category,
+            "ReorderPoint": int(product.reorder_point),
+            "ExpiryDate": product.expiration_date.isoformat() if product.expiration_date else "",
+        }
+        for product in Product.query.order_by(Product.name.asc()).all()
+    ]
+
+    csv_text = pd.DataFrame(rows).to_csv(index=False)
+    stream = io.BytesIO(csv_text.encode("utf-8"))
+    write_audit("DATASET_EXPORTED", "Inventory dataset exported as CSV")
+    db.session.commit()
+    return send_file(stream, mimetype="text/csv", as_attachment=True, download_name="inventory-dataset.csv")
+
+
+@app.route("/export-dataset/sales")
+@login_required
+@roles_required("admin")
+def export_dataset_sales():
+    records = (
+        db.session.query(
+            Sale.sold_at,
+            Product.name,
+            SaleItem.quantity,
+            SaleItem.unit_price,
+            Sale.invoice_no,
+        )
+        .join(SaleItem, Sale.id == SaleItem.sale_id)
+        .join(Product, Product.id == SaleItem.product_id)
+        .order_by(Sale.sold_at.asc())
+        .all()
+    )
+
+    rows = [
+        {
+            "ProductName": row.name,
+            "quantity": int(row.quantity),
+            "UnitPrice": float(row.unit_price),
+            "Date": row.sold_at.strftime("%Y-%m-%d"),
+            "Time": row.sold_at.strftime("%H:%M:%S"),
+            "InvoiceNo": row.invoice_no,
+        }
+        for row in records
+    ]
+
+    csv_text = pd.DataFrame(rows).to_csv(index=False)
+    stream = io.BytesIO(csv_text.encode("utf-8"))
+    write_audit("DATASET_EXPORTED", "Sales dataset exported as CSV")
+    db.session.commit()
+    return send_file(stream, mimetype="text/csv", as_attachment=True, download_name="sales-dataset.csv")
 
 
 @app.route("/alerts")
