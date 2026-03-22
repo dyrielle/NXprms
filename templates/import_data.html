@@ -1,103 +1,75 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
-    <h2>Data Management</h2>
-    
-    <div class="grid two-col">
-        <!-- Inventory Import Card -->
-        <div class="card fade-up">
-            <h3 style="margin-top: 0; color: #0d8f5b;">Inventory Import</h3>
-            <form method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 12px;">
+<div class="container dm-page">
+    <header class="dm-header fade-up">
+        <h2>Data Management</h2>
+        <p>Import and export inventory or sales datasets in CSV format.</p>
+    </header>
+
+    <div class="grid two-col dm-grid">
+        <section class="card fade-up dm-card">
+            <h3>Inventory Import</h3>
+            <form method="post" enctype="multipart/form-data" class="dm-form">
                 <div class="form-group">
-                    <label for="inventory_file">Upload Inventory CSV</label>
+                    <label for="inventory_file">Inventory CSV</label>
                     <input type="file" id="inventory_file" name="inventory_file" accept=".csv" />
                 </div>
 
                 <div class="form-group">
-                    <label for="inventory_path">CSV File Path (optional fallback)</label>
-                    <input type="text" id="inventory_path" name="inventory_path" value="{{ default_inventory }}" 
-                           placeholder="e.g., data/inventory.csv" />
+                    <label for="inventory_path">Server File Path (optional)</label>
+                    <input type="text" id="inventory_path" name="inventory_path" value="{{ default_inventory }}" placeholder="e.g., data/inventory.csv" />
                 </div>
-                
-                <label style="display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; gap: 8px;">
+
+                <label class="dm-checkbox-row">
                     <input type="checkbox" name="overwrite_inventory" checked />
                     <span>Overwrite existing product quantities</span>
                 </label>
 
                 <div class="form-group">
-                    <label for="inventory_max_rows">Max rows for demo import</label>
+                    <label for="inventory_max_rows">Row Limit (optional)</label>
                     <input type="number" id="inventory_max_rows" name="inventory_max_rows" value="5000" min="1" />
                 </div>
-                
-                <p style="font-size: 0.85rem; color: #888; margin: 8px 0 0 0;">
-                    Upload inventory records including stock levels and pricing.
-                </p>
-                
-                <button type="submit" name="import_type" value="inventory" style="margin-top: 8px;">
-                    Import Inventory
-                </button>
-            </form>
-        </div>
 
-        <!-- Sales Import Card -->
-        <div class="card fade-up delay-1">
-            <h3 style="margin-top: 0; color: #0d8f5b;">Sales Import</h3>
-            <form method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 12px;">
+                <button type="submit" name="import_type" value="inventory" class="dm-submit-btn">Import Inventory</button>
+            </form>
+        </section>
+
+        <section class="card fade-up delay-1 dm-card">
+            <h3>Sales Import</h3>
+            <form method="post" enctype="multipart/form-data" class="dm-form">
                 <div class="form-group">
-                    <label for="sales_file">Upload Sales CSV</label>
+                    <label for="sales_file">Sales CSV</label>
                     <input type="file" id="sales_file" name="sales_file" accept=".csv" />
                 </div>
 
                 <div class="form-group">
-                    <label for="sales_path">CSV File Path (optional fallback)</label>
-                    <input type="text" id="sales_path" name="sales_path" value="{{ default_sales }}" 
-                           placeholder="e.g., data/sales.csv" />
+                    <label for="sales_path">Server File Path (optional)</label>
+                    <input type="text" id="sales_path" name="sales_path" value="{{ default_sales }}" placeholder="e.g., data/sales.csv" />
                 </div>
-                
-                <label style="display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; gap: 8px;">
+
+                <label class="dm-checkbox-row">
                     <input type="checkbox" name="reset_sales" checked />
                     <span>Clear existing sales before import</span>
                 </label>
 
                 <div class="form-group">
-                    <label for="sales_max_rows">Max rows for demo import</label>
+                    <label for="sales_max_rows">Row Limit (optional)</label>
                     <input type="number" id="sales_max_rows" name="sales_max_rows" value="10000" min="1" />
                 </div>
-                
-                <p style="font-size: 0.85rem; color: #888; margin: 8px 0 0 0;">
-                    Upload transaction history for reporting and forecasting.
-                </p>
-                
-                <button type="submit" name="import_type" value="sales" style="margin-top: 8px;">
-                    Import Sales
-                </button>
+
+                <button type="submit" name="import_type" value="sales" class="dm-submit-btn">Import Sales</button>
             </form>
-        </div>
+        </section>
     </div>
 
-    <!-- Dataset Export Card -->
-    <div class="card fade-up delay-2">
-        <h3 style="margin-top: 0; color: #0d8f5b;">Dataset Export</h3>
-        <p style="font-size: 0.9rem; color: #666; margin-top: 0;">
-            Download current data as CSV files for backup, sharing, or re-import.
-        </p>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-            <a href="{{ url_for('export_dataset_inventory') }}" class="btn">Export Inventory CSV</a>
-            <a href="{{ url_for('export_dataset_sales') }}" class="btn">Export Sales CSV</a>
+    <section class="card fade-up delay-2 dm-export-card">
+        <h3>Dataset Export</h3>
+        <p>Download current records for backup, migration, or offline analysis.</p>
+        <div class="dm-export-actions">
+            <a href="{{ url_for('export_dataset_inventory') }}" class="dm-link-btn">Export Inventory CSV</a>
+            <a href="{{ url_for('export_dataset_sales') }}" class="dm-link-btn">Export Sales CSV</a>
         </div>
-    </div>
-
-    <!-- Data Requirements Card -->
-    <div class="card fade-up delay-2" style="background-color: #ecf8f1; border-left: 4px solid #0d8f5b;">
-        <h4 style="margin: 0 0 12px 0; color: #0d8f5b;">Data Requirements</h4>
-        <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #666;">
-            <li>CSV files must include headers in the first row</li>
-            <li>Required inventory columns: ProductName, quantity, UnitPrice</li>
-            <li>Required sales columns: ProductName, quantity, UnitPrice, Date, Time</li>
-            <li>Use max-row limits for large files to avoid import timeout in cloud environments</li>
-            <li>Uploaded data is validated before saving</li>
-        </ul>
-    </div>
+    </section>
 </div>
 {% endblock %}
