@@ -34,7 +34,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4">No transactions yet.</td>
+                        <td colspan="4">No transactions available.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -94,7 +94,7 @@
                         <td>${money(item.subtotal)}</td>
                     </tr>
                 `).join('')
-                : '<tr><td colspan="4">No item details available.</td></tr>';
+                : '<tr><td colspan="4">No line items available.</td></tr>';
 
             popoverBody.innerHTML = `
                 <div class="tx-meta">

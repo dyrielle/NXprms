@@ -130,7 +130,7 @@ def roles_required(*allowed_roles: str):
             if not current_user.is_authenticated:
                 return login_manager.unauthorized()
             if current_user.role not in allowed_roles:
-                flash("Access denied for your role.", "danger")
+                flash("You do not have permission to access this page.", "danger")
                 return redirect(url_for("dashboard"))
             return func_ref(*args, **kwargs)
 
@@ -493,7 +493,7 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if not has_users():
-        flash("No account found yet. Please sign up to create the first admin account.", "info")
+        flash("No user account found. Create the first administrator account to continue.", "info")
         return redirect(url_for("signup"))
 
     if request.method == "POST":
@@ -504,7 +504,7 @@ def login():
             login_user(user)
             write_audit("LOGIN_SUCCESS", f"User {username} logged in", user_id=user.id)
             db.session.commit()
-            flash("Logged in successfully.", "success")
+            flash("Signed in successfully.", "success")
             return redirect(url_for("dashboard"))
         write_audit("LOGIN_FAILED", f"Failed login attempt for username: {username}")
         db.session.commit()
@@ -702,7 +702,7 @@ def users():
             db.session.add(User(username=username, password=generate_password_hash(password), role=role))
             write_audit("USER_CREATED", f"Created user {username} with role {role}")
             db.session.commit()
-            flash("User created.", "success")
+            flash("User account created successfully.", "success")
             return redirect(url_for("users"))
 
     data = User.query.order_by(User.created_at.desc()).all()
@@ -835,11 +835,13 @@ def inventory_new():
             )
             write_audit("PRODUCT_CREATED", f"Added product {product.name} (qty={product.quantity})")
             db.session.commit()
-            flash("Product added to inventory.", "success")
+            flash("Product added successfully.", "success")
             return redirect(url_for("inventory"))
         except Exception as exc:
             db.session.rollback()
-            flash(f"Unable to add product: {exc}", "danger")
+            write_audit("PRODUCT_CREATE_FAILED", f"Failed to add product: {str(exc)[:400]}")
+            db.session.commit()
+            flash("Product could not be added. Please review the form and try again.", "danger")
 
     return render_template("inventory_new.html")
 
@@ -849,7 +851,7 @@ def inventory_new():
 def inventory_product_info(product_id: int):
     product = db.session.get(Product, product_id)
     if not product:
-        flash("Product not found.", "danger")
+        flash("The selected product could not be found.", "danger")
         return redirect(url_for("inventory"))
 
     strip_size = 10
@@ -874,7 +876,7 @@ def inventory_product_info(product_id: int):
 def inventory_delete(product_id: int):
     product = db.session.get(Product, product_id)
     if not product:
-        flash("Product not found.", "danger")
+        flash("The selected product could not be found.", "danger")
         return redirect(url_for("inventory"))
 
     try:
@@ -883,10 +885,12 @@ def inventory_delete(product_id: int):
         db.session.delete(product)
         write_audit("PRODUCT_DELETED", f"Deleted product {product.name} ({product.sku})")
         db.session.commit()
-        flash("Product deleted.", "success")
+        flash("Product deleted successfully.", "success")
     except Exception as exc:
         db.session.rollback()
-        flash(f"Unable to delete product: {exc}", "danger")
+        write_audit("PRODUCT_DELETE_FAILED", f"Failed to delete product {product_id}: {str(exc)[:400]}")
+        db.session.commit()
+        flash("Product could not be deleted. Please try again.", "danger")
 
     return redirect(url_for("inventory"))
 
@@ -896,7 +900,7 @@ def inventory_delete(product_id: int):
 def adjust_inventory(product_id: int):
     product = db.session.get(Product, product_id)
     if not product:
-        flash("Product not found.", "danger")
+        flash("The selected product could not be found.", "danger")
         return redirect(url_for("inventory"))
 
     try:
@@ -926,10 +930,12 @@ def adjust_inventory(product_id: int):
             f"{product.name}: {movement_type} {quantity}. New qty={product.quantity}. Note={note}",
         )
         db.session.commit()
-        flash("Inventory updated.", "success")
+        flash("Inventory updated successfully.", "success")
     except Exception as exc:
         db.session.rollback()
-        flash(f"Inventory update failed: {exc}", "danger")
+        write_audit("INVENTORY_ADJUST_FAILED", f"Failed adjustment for product {product_id}: {str(exc)[:400]}")
+        db.session.commit()
+        flash("Inventory update could not be completed. Please check the values and try again.", "danger")
 
     return redirect(url_for("inventory"))
 
@@ -1242,7 +1248,7 @@ def reports_excel():
 def receipt(sale_id: int):
     sale = db.session.get(Sale, sale_id)
     if not sale:
-        flash("Receipt not found.", "danger")
+        flash("The requested receipt could not be found.", "danger")
         return redirect(url_for("sales"))
     return render_template("receipt.html", sale=sale)
 
