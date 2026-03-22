@@ -1368,7 +1368,12 @@ def import_data():
             return redirect(url_for("import_data"))
         except Exception as exc:
             db.session.rollback()
-            flash(f"Import failed: {exc}", "danger")
+            try:
+                write_audit("CSV_IMPORT_FAILED", f"type={import_type}; error={str(exc)[:400]}")
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            flash("Import could not be completed. Please verify your file format and try again.", "danger")
 
     return render_template(
         "import_data.html",
