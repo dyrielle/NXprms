@@ -56,6 +56,9 @@
 
                 <div class="nav-section">
                     {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('import_data') }}" class="nav-item {% if request.endpoint == 'import_data' %}active{% endif %}">
+                            <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">upload_file</span><span>Import Data</span></span>
+                        </a>
                         <a href="{{ url_for('audit_logs') }}" class="nav-item">
                             <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">history</span><span>Audit Logs</span></span>
                         </a>
