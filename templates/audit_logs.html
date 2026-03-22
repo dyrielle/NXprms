@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Audit Trail</h2>
+    
+    <!-- Audit Logs Card -->
+    <div class="card fade-up">
+        {% if logs %}
+            <p style="font-size: 0.85rem; color: #888; margin-bottom: 16px;">
+                Total audit entries: <strong>{{ logs|length }}</strong>
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                        <tr>
+                            <td style="font-size: 0.9rem;">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else 'N/A' }}</td>
+                            <td>{{ log.user.username if log.user else 'system' }}</td>
+                            <td>
+                                <span style="padding: 2px 6px; border-radius: 3px; font-size: 0.85rem;
+                                    {% if 'create' in log.action.lower() %}background-color: #d4edda; color: #155724;
+                                    {% elif 'update' in log.action.lower() %}background-color: #cce5ff; color: #004085;
+                                    {% elif 'delete' in log.action.lower() %}background-color: #f8d7da; color: #721c24;
+                                    {% else %}background-color: #e2e3e5; color: #383d41;
+                                    {% endif %}">
+                                    {{ log.action }}
+                                </span>
+                            </td>
+                            <td style="font-size: 0.9rem; color: #666;">{{ log.details }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="text-align: center; color: #999; padding: 32px;">No audit logs available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

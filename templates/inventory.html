@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container inv-module-page">
+    <section class="inv-module-shell fade-up">
+        <header class="inv-module-head">
+            <h2>Inventory</h2>
+            <span class="dash-date-pill" id="inventoryDate">03/01/2026</span>
+        </header>
+
+        <div class="inv-module-body">
+            <div class="inv-toolbar">
+                <form method="get" class="inv-toolbar-form" id="invFilterForm">
+                    <label class="inv-search-box" for="invSearch">
+                        <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                        <input id="invSearch" type="text" name="q" value="{{ keyword }}" placeholder="Search product" />
+                    </label>
+
+                    <label class="inv-filter">
+                        <span>Category</span>
+                        <select name="category" id="invCategoryFilter">
+                            <option value="">All</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label class="inv-filter">
+                        <span>Type</span>
+                        <select id="invTypeFilter" aria-label="Type filter">
+                            <option value="">All</option>
+                            <option value="Medicine">Medicine</option>
+                            <option value="Mom&Baby">Mom&Baby</option>
+                            <option value="Personal Care">Personal Care</option>
+                            <option value="Supplement">Supplement</option>
+                        </select>
+                    </label>
+                </form>
+
+                <a href="{{ url_for('inventory_new') }}" class="inv-add-btn">
+                    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                    <span>Add Item</span>
+                </a>
+            </div>
+
+            <div class="inv-table-shell">
+                <div class="inv-table-wrap">
+                    <table class="inv-wide-table" id="inventoryWideTable">
+                        <thead>
+                            <tr>
+                                <th class="sticky-col">Product Name</th>
+                                <th class="sticky-col-2">Code</th>
+                                <th>Type</th>
+                                <th>Category</th>
+                                <th>Size</th>
+                                <th class="inv-unit-head-cell">
+                                    <button class="inv-unit-head" type="button" id="qtyModeButton" aria-expanded="false">
+                                        Quantity
+                                        <span class="material-symbols-outlined">keyboard_arrow_down</span>
+                                    </button>
+                                    <div class="inv-unit-menu" id="qtyModeMenu" role="menu">
+                                        <button type="button" data-mode="piece">Piece</button>
+                                        <button type="button" data-mode="strip">Strip</button>
+                                    </div>
+                                </th>
+                                <th class="inv-unit-head-cell">
+                                    <button class="inv-unit-head" type="button" id="priceModeButton" aria-expanded="false">
+                                        Unit Price
+                                        <span class="material-symbols-outlined">keyboard_arrow_down</span>
+                                    </button>
+                                    <div class="inv-unit-menu" id="priceModeMenu" role="menu">
+                                        <button type="button" data-mode="piece">Piece</button>
+                                        <button type="button" data-mode="strip">Strip</button>
+                                    </div>
+                                </th>
+                                <th>Status</th>
+                                <th>Expiration</th>
+                                <th>Product Info.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                            <tr data-type="{{ row.type }}">
+                                <td class="sticky-col">{{ row.name }}</td>
+                                <td class="sticky-col-2">{{ row.code }}</td>
+                                <td>{{ row.type }}</td>
+                                <td>{{ row.category }}</td>
+                                <td>{{ row.size }}</td>
+                                <td>
+                                    <span
+                                        class="inv-quantity-value"
+                                        data-piece="{{ row.qty_piece }}"
+                                        data-strip="{{ row.qty_strip }}"
+                                    >{{ row.qty_piece }}</span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="inv-price-value"
+                                        data-piece="{{ '%.2f'|format(row.price_piece) }}"
+                                        data-strip="{{ '%.2f'|format(row.price_strip) }}"
+                                    >{{ '%.2f'|format(row.price_piece) }}</span>
+                                </td>
+                                <td><span class="inv-status-badge {{ row.status_class }}">{{ row.status_label }}</span></td>
+                                <td>{{ row.expiration if row.expiration else 'N/A' }}</td>
+                                <td><a class="inv-view-link-btn" href="{{ url_for('inventory_product_info', product_id=row.id) }}">View ></a></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="10" class="inv-empty-state">No products found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="inv-table-footer">Rows per page: 25 | Showing 1 - 25 Rows | Page 1 of 1</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const dateEl = document.getElementById('inventoryDate');
+        if (dateEl) {
+            dateEl.textContent = new Date().toLocaleDateString('en-US');
+        }
+
+        const filterForm = document.getElementById('invFilterForm');
+        const categoryFilter = document.getElementById('invCategoryFilter');
+        if (categoryFilter && filterForm) {
+            categoryFilter.addEventListener('change', () => filterForm.submit());
+        }
+
+        const typeFilter = document.getElementById('invTypeFilter');
+        const tableRows = Array.from(document.querySelectorAll('#inventoryWideTable tbody tr[data-type]'));
+
+        function applyTypeFilter() {
+            const selected = typeFilter ? (typeFilter.value || '').trim() : '';
+            tableRows.forEach((row) => {
+                const rowType = (row.dataset.type || '').trim();
+                row.style.display = !selected || rowType === selected ? '' : 'none';
+            });
+        }
+
+        if (typeFilter) {
+            typeFilter.addEventListener('change', applyTypeFilter);
+        }
+
+        let quantityMode = 'piece';
+        let priceMode = 'piece';
+
+        const qtyButton = document.getElementById('qtyModeButton');
+        const qtyMenu = document.getElementById('qtyModeMenu');
+        const priceButton = document.getElementById('priceModeButton');
+        const priceMenu = document.getElementById('priceModeMenu');
+
+        function renderUnits() {
+            document.querySelectorAll('.inv-quantity-value').forEach((el) => {
+                el.textContent = el.dataset[quantityMode] || '0';
+            });
+
+            document.querySelectorAll('.inv-price-value').forEach((el) => {
+                el.textContent = el.dataset[priceMode] || '0.00';
+            });
+        }
+
+        function closeMenus() {
+            if (qtyMenu) qtyMenu.classList.remove('open');
+            if (priceMenu) priceMenu.classList.remove('open');
+            if (qtyButton) qtyButton.setAttribute('aria-expanded', 'false');
+            if (priceButton) priceButton.setAttribute('aria-expanded', 'false');
+        }
+
+        if (qtyButton && qtyMenu) {
+            qtyButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const willOpen = !qtyMenu.classList.contains('open');
+                closeMenus();
+                if (willOpen) {
+                    qtyMenu.classList.add('open');
+                    qtyButton.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            qtyMenu.querySelectorAll('button[data-mode]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    quantityMode = btn.dataset.mode || 'piece';
+                    renderUnits();
+                    closeMenus();
+                });
+            });
+        }
+
+        if (priceButton && priceMenu) {
+            priceButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const willOpen = !priceMenu.classList.contains('open');
+                closeMenus();
+                if (willOpen) {
+                    priceMenu.classList.add('open');
+                    priceButton.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            priceMenu.querySelectorAll('button[data-mode]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    priceMode = btn.dataset.mode || 'piece';
+                    renderUnits();
+                    closeMenus();
+                });
+            });
+        }
+
+        document.addEventListener('click', closeMenus);
+        applyTypeFilter();
+        renderUnits();
+    })();
+</script>
+{% endblock %}

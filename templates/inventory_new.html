@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container inv-module-page">
+    <section class="inv-module-shell fade-up">
+        <header class="inv-module-head">
+            <h2>Inventory</h2>
+            <span class="dash-date-pill" id="inventoryNewDate">03/01/2026</span>
+        </header>
+
+        <div class="inv-module-body">
+            <h3 class="inv-add-title"><span>Inventory</span> <span class="sep">></span> Add New Product</h3>
+
+            <form method="post" class="inv-new-form">
+                <div class="inv-new-grid five">
+                    <label>
+                        <span>Product Name</span>
+                        <input type="text" name="name" required />
+                    </label>
+                    <label>
+                        <span>Code</span>
+                        <input type="text" name="sku" required />
+                    </label>
+                    <label>
+                        <span>Quantity per Piece</span>
+                        <input type="number" min="0" name="quantity_piece" value="0" required />
+                    </label>
+                    <label>
+                        <span>Quantity per Strip</span>
+                        <input type="number" min="0" name="quantity_strip" value="0" required />
+                    </label>
+                    <span></span>
+                </div>
+
+                <div class="inv-new-grid four">
+                    <label>
+                        <span>Unit Price per Piece</span>
+                        <input type="number" min="0" step="0.01" name="unit_price_piece" required />
+                    </label>
+                    <label>
+                        <span>Unit Price per Strip</span>
+                        <input type="number" min="0" step="0.01" name="unit_price_strip" />
+                    </label>
+                    <label class="wide">
+                        <span>Expiration Date</span>
+                        <input type="date" name="expiration_date" />
+                    </label>
+                </div>
+
+                <div class="inv-new-grid three">
+                    <label>
+                        <span>Size</span>
+                        <input type="number" min="1" name="size" value="10" />
+                    </label>
+                    <label>
+                        <span>Product Type</span>
+                        <select name="product_type">
+                            <option>Medicine</option>
+                            <option>Mom&Baby</option>
+                            <option>Personal Care</option>
+                            <option>Supplement</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Product Category</span>
+                        <select name="category">
+                            <option value="General">General</option>
+                            <option value="Medicine">Medicine</option>
+                            <option value="Personal Care">Personal Care</option>
+                            <option value="Vitamins">Vitamins</option>
+                            <option value="Milk">Milk</option>
+                            <option value="Baby">Baby</option>
+                            <option value="Prescription">Prescription</option>
+                        </select>
+                    </label>
+                </div>
+
+                <label class="inv-description-field">
+                    <span>Description</span>
+                    <textarea name="description" rows="5" placeholder="Optional product details..."></textarea>
+                </label>
+
+                <div class="inv-new-actions">
+                    <button type="submit" class="inv-save-btn">Save Details</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const dateEl = document.getElementById('inventoryNewDate');
+        if (dateEl) {
+            dateEl.textContent = new Date().toLocaleDateString('en-US');
+        }
+    })();
+</script>
+{% endblock %}

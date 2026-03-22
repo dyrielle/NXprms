@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container inv-module-page">
+    <section class="inv-module-shell fade-up">
+        <header class="inv-module-head">
+            <h2>Sales Reports</h2>
+            <span class="dash-date-pill" id="reportsDate">03/01/2026</span>
+        </header>
+
+        <div class="inv-module-body">
+            <div class="rep-toolbar">
+                <div class="inv-search-box rep-search-box">
+                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                    <input id="repSearch" type="text" placeholder="Search in sales report" />
+                </div>
+
+                <div class="inv-filter">
+                    <span>Category</span>
+                    <select id="repCategory">
+                        <option value="">All</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="inv-filter">
+                    <span>Type</span>
+                    <select id="repType">
+                        <option value="">All</option>
+                        <option value="Medicine">Medicine</option>
+                        <option value="Mom&Baby">Mom&Baby</option>
+                        <option value="Personal Care">Personal Care</option>
+                        <option value="Supplement">Supplement</option>
+                    </select>
+                </div>
+
+                <div class="rep-menu-wrap">
+                    <button type="button" class="rep-menu-btn" id="reportTypeBtn">
+                        <span>Monthly</span>
+                        <span class="material-symbols-outlined">keyboard_arrow_down</span>
+                    </button>
+                    <div class="rep-menu" id="reportTypeMenu">
+                        {% for rt in report_types %}
+                        <button type="button" data-value="{{ rt }}">{{ rt }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="rep-menu-wrap">
+                    <button type="button" class="rep-download-btn" id="downloadBtn">
+                        <span>Download Report</span>
+                        <span class="material-symbols-outlined">keyboard_arrow_down</span>
+                    </button>
+                    <div class="rep-menu" id="downloadMenu">
+                        <a href="{{ url_for('reports_excel') }}">Excel</a>
+                        <a href="{{ url_for('reports_pdf') }}">PDF</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inv-table-shell">
+                <div class="inv-table-wrap">
+                    <table class="inv-wide-table" id="salesReportTable">
+                        <thead>
+                            <tr>
+                                <th>Transaction Date</th>
+                                <th>Product Name</th>
+                                <th>Code</th>
+                                <th>Type</th>
+                                <th>Category</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in sales_rows %}
+                            <tr data-category="{{ row.category }}" data-type="{{ row.type }}">
+                                <td>{{ row.transaction_date }}</td>
+                                <td>{{ row.product_name }}</td>
+                                <td>{{ row.code }}</td>
+                                <td>{{ row.type }}</td>
+                                <td>{{ row.category }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="inv-empty-state">No sales rows available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="inv-table-footer">Rows per page: 25 | Showing 1 - 25 Rows | Page 1 of 1</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="inv-module-shell fade-up" style="margin-top: 1.2rem;">
+        <header class="inv-module-head">
+            <h2>Inventory</h2>
+            <span class="dash-date-pill" id="inventoryRepDate">03/01/2026</span>
+        </header>
+
+        <div class="inv-module-body">
+            <div class="rep-toolbar">
+                <div class="inv-search-box rep-search-box">
+                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                    <input id="invRepSearch" type="text" placeholder="Search inventory report" />
+                </div>
+
+                <div class="inv-filter">
+                    <span>Category</span>
+                    <select id="invRepCategory">
+                        <option value="">All</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="inv-filter">
+                    <span>Type</span>
+                    <select id="invRepType">
+                        <option value="">All</option>
+                        <option value="Medicine">Medicine</option>
+                        <option value="Mom&Baby">Mom&Baby</option>
+                        <option value="Personal Care">Personal Care</option>
+                        <option value="Supplement">Supplement</option>
+                    </select>
+                </div>
+
+                <a href="{{ url_for('inventory_new') }}" class="inv-add-btn">
+                    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                    <span>Add Item</span>
+                </a>
+            </div>
+
+            <div class="inv-table-shell">
+                <div class="inv-table-wrap">
+                    <table class="inv-wide-table" id="inventoryReportTable">
+                        <thead>
+                            <tr>
+                                <th>Size</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total Sales</th>
+                                <th>Payment Method</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in inventory_rows %}
+                            <tr data-category="{{ row.category }}" data-type="{{ row.type }}">
+                                <td>{{ row.size }}</td>
+                                <td>{{ row.quantity }}</td>
+                                <td>{{ '%.2f'|format(row.unit_price) }}</td>
+                                <td>{{ '%.2f'|format(row.total_sales) }}</td>
+                                <td>{{ row.payment_method }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="inv-empty-state">No inventory rows available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="inv-table-footer">Rows per page: 25 | Showing 1 - 25 Rows | Page 1 of 1</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const nowText = new Date().toLocaleDateString('en-US');
+        const dateA = document.getElementById('reportsDate');
+        const dateB = document.getElementById('inventoryRepDate');
+        if (dateA) dateA.textContent = nowText;
+        if (dateB) dateB.textContent = nowText;
+
+        const reportTypeBtn = document.getElementById('reportTypeBtn');
+        const reportTypeMenu = document.getElementById('reportTypeMenu');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadMenu = document.getElementById('downloadMenu');
+
+        function closeMenus() {
+            if (reportTypeMenu) reportTypeMenu.classList.remove('open');
+            if (downloadMenu) downloadMenu.classList.remove('open');
+        }
+
+        if (reportTypeBtn && reportTypeMenu) {
+            reportTypeBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const open = !reportTypeMenu.classList.contains('open');
+                closeMenus();
+                if (open) reportTypeMenu.classList.add('open');
+            });
+
+            reportTypeMenu.querySelectorAll('button[data-value]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const selected = btn.dataset.value || 'Monthly';
+                    reportTypeBtn.querySelector('span').textContent = selected;
+                    closeMenus();
+                });
+            });
+        }
+
+        if (downloadBtn && downloadMenu) {
+            downloadBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const open = !downloadMenu.classList.contains('open');
+                closeMenus();
+                if (open) downloadMenu.classList.add('open');
+            });
+        }
+
+        function applyFilters(tableId, searchId, categoryId, typeId) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            const rows = Array.from(table.querySelectorAll('tbody tr[data-category]'));
+            const searchInput = document.getElementById(searchId);
+            const categoryInput = document.getElementById(categoryId);
+            const typeInput = document.getElementById(typeId);
+
+            const run = () => {
+                const searchValue = ((searchInput && searchInput.value) || '').toLowerCase().trim();
+                const categoryValue = ((categoryInput && categoryInput.value) || '').trim();
+                const typeValue = ((typeInput && typeInput.value) || '').trim();
+
+                rows.forEach((row) => {
+                    const textMatch = !searchValue || row.textContent.toLowerCase().includes(searchValue);
+                    const categoryMatch = !categoryValue || row.dataset.category === categoryValue;
+                    const typeMatch = !typeValue || row.dataset.type === typeValue;
+                    row.style.display = textMatch && categoryMatch && typeMatch ? '' : 'none';
+                });
+            };
+
+            if (searchInput) searchInput.addEventListener('input', run);
+            if (categoryInput) categoryInput.addEventListener('change', run);
+            if (typeInput) typeInput.addEventListener('change', run);
+            run();
+        }
+
+        applyFilters('salesReportTable', 'repSearch', 'repCategory', 'repType');
+        applyFilters('inventoryReportTable', 'invRepSearch', 'invRepCategory', 'invRepType');
+
+        document.addEventListener('click', closeMenus);
+    })();
+</script>
+    </div>
+</div>
+{% endblock %}

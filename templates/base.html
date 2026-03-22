@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nica Xandra PMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-logo">NX</a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-group">
+                        <button type="button" class="nav-item nav-parent nav-toggle {% if request.endpoint in ['pos_terminal', 'sales', 'billing'] %}active{% endif %}" aria-expanded="false">
+                            <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">point_of_sale</span><span>POS Terminal</span></span>
+                            <span class="nav-caret">▾</span>
+                        </button>
+                        <div class="nav-submenu">
+                            <a href="{{ url_for('pos_terminal') }}" class="nav-subitem {% if request.endpoint == 'pos_terminal' %}active{% endif %}"><span class="material-symbols-outlined nav-icon" aria-hidden="true">desktop_windows</span><span>POS Terminal</span></a>
+                            <a href="{{ url_for('sales') }}" class="nav-subitem {% if request.endpoint == 'sales' %}active{% endif %}"><span class="material-symbols-outlined nav-icon" aria-hidden="true">receipt_long</span><span>Sales</span></a>
+                            <a href="{{ url_for('billing') }}" class="nav-subitem {% if request.endpoint == 'billing' %}active{% endif %}"><span class="material-symbols-outlined nav-icon" aria-hidden="true">payments</span><span>Billing</span></a>
+                        </div>
+                    </div>
+
+                    <div class="nav-group">
+                        <button type="button" class="nav-item nav-parent nav-toggle {% if request.endpoint in ['dashboard', 'inventory_dashboard'] %}active{% endif %}" aria-expanded="false">
+                            <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">space_dashboard</span><span>Dashboard</span></span>
+                            <span class="nav-caret">▾</span>
+                        </button>
+                        <div class="nav-submenu">
+                            <a href="{{ url_for('inventory_dashboard') }}" class="nav-subitem {% if request.endpoint == 'inventory_dashboard' %}active{% endif %}"><span class="material-symbols-outlined nav-icon" aria-hidden="true">inventory_2</span><span>Inventory Dashboard</span></a>
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('inventory') }}" class="nav-item {% if request.endpoint in ['inventory', 'inventory_new', 'inventory_product_info'] %}active{% endif %}">
+                        <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">medication</span><span>Inventory</span></span>
+                    </a>
+                    <a href="{{ url_for('reports') }}" class="nav-item {% if request.endpoint == 'reports' or request.endpoint == 'reports_pdf' %}active{% endif %}">
+                        <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">monitoring</span><span>Reports</span></span>
+                    </a>
+                    <a href="{{ url_for('alerts') }}" class="nav-item {% if request.endpoint == 'alerts' %}active{% endif %}">
+                        <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">notifications</span><span>Notifications</span></span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('audit_logs') }}" class="nav-item">
+                            <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">history</span><span>Audit Logs</span></span>
+                        </a>
+                    {% endif %}
+                    <a href="{% if current_user.role == 'admin' %}{{ url_for('users') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="nav-item {% if request.endpoint == 'users' %}active{% endif %}">
+                        <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">settings</span><span>Settings</span></span>
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="nav-item logout-item">
+                        <span class="nav-label"><span class="material-symbols-outlined nav-icon" aria-hidden="true">logout</span><span>Log Out</span></span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="top-header">
+                <h1>Nica Xandra Pharmacy Management System</h1>
+                <div class="header-right">
+                    <span class="date-display" id="dateDisplay"></span>
+                    <span class="user-role">{{ current_user.username }} ({{ current_user.role }})</span>
+                </div>
+            </header>
+
+            <main class="content-area">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Update date display
+        const now = new Date();
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+        document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-US', options);
+
+        // Sidebar group toggle behavior
+        const navGroups = document.querySelectorAll('.nav-group');
+        navGroups.forEach((group) => {
+            const toggle = group.querySelector('.nav-toggle');
+            if (!toggle) return;
+
+            // Auto-open group when current page is inside the submenu.
+            if (group.querySelector('.nav-subitem.active')) {
+                group.classList.add('active-parent');
+                group.classList.add('open');
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+
+            toggle.addEventListener('click', () => {
+                const isOpen = group.classList.contains('open');
+
+                // Accordion behavior: keep only one expanded group at a time.
+                navGroups.forEach((otherGroup) => {
+                    if (otherGroup === group) return;
+                    otherGroup.classList.remove('open');
+                    const otherToggle = otherGroup.querySelector('.nav-toggle');
+                    if (otherToggle) {
+                        otherToggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                group.classList.toggle('open', !isOpen);
+                toggle.setAttribute('aria-expanded', String(!isOpen));
+            });
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

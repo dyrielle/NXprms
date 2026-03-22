@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container dash-main">
+    <section class="dash-shell fade-up">
+        <header class="dash-head">
+            <h2>Analytics Dashboard</h2>
+            <span class="dash-date-pill" id="dashDate">03/01/2026</span>
+        </header>
+
+        <div class="dash-body">
+            <div class="dash-toolbar">
+                <span>Last 7 Days</span>
+                <span>Last 30 Days</span>
+                <span>Custom</span>
+            </div>
+
+            <section class="dash-key-metrics">
+                <h3>Key Metrics</h3>
+                <div class="dash-kpi-grid">
+                    <article class="dash-kpi-card">
+                        <h4>Total Sales</h4>
+                        <p>PHP {{ '{:,.2f}'.format(today_sales) }}</p>
+                    </article>
+                    <article class="dash-kpi-card">
+                        <h4>Items Sold</h4>
+                        <p>{{ items_sold }}</p>
+                    </article>
+                    <article class="dash-kpi-card">
+                        <h4>Transactions</h4>
+                        <p>{{ transactions_count }}</p>
+                    </article>
+                    <article class="dash-kpi-card">
+                        <h4>Sales Growth</h4>
+                        <p>{{ '%.2f'|format(sales_growth) }}%</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="dash-chart-grid top-charts">
+                <article class="dash-panel">
+                    <h4>Revenue By Category</h4>
+                    <div class="chart donut-chart">
+                        <div class="donut-core">$895</div>
+                    </div>
+                </article>
+                <article class="dash-panel wide">
+                    <h4>Sales Performance</h4>
+                    <div class="chart area-chart"></div>
+                </article>
+                <article class="dash-panel">
+                    <h4>Sales Forecasting Chart</h4>
+                    <div class="chart line-chart"></div>
+                </article>
+            </section>
+
+            <section class="dash-chart-grid bottom-charts">
+                <article class="dash-panel">
+                    <h4>Payment Methods</h4>
+                    <div class="chart donut-chart second">
+                        <div class="donut-core">{{ transactions_count }}</div>
+                    </div>
+                </article>
+                <article class="dash-panel wide">
+                    <h4>Demand Trend</h4>
+                    <div class="chart zigzag-chart"></div>
+                </article>
+                <article class="dash-panel">
+                    <h4>Best & Least Selling</h4>
+                    <div class="chart bars-chart"></div>
+                </article>
+            </section>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const d = new Date();
+        document.getElementById('dashDate').textContent = d.toLocaleDateString('en-US');
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container pos-page">
+    <section class="pos-list-shell fade-up">
+        <header class="pos-list-header">
+            <h2>Sales</h2>
+            <span class="pos-date" id="posDate"></span>
+        </header>
+
+        <div class="pos-list-body">
+            <div class="pos-list-filters">
+                <input id="salesFilter" type="text" placeholder="Search" />
+            </div>
+
+            <table class="pos-list-table" id="salesTable">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Series Code</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in sales_rows %}
+                    <tr>
+                        <td>
+                            <button type="button" class="tx-link" data-transaction='{{ row|tojson|safe }}'>{{ row.transaction_id }}</button>
+                        </td>
+                        <td>{{ row.series_code }}</td>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.time }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">No transactions yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <footer class="pos-list-footer">Rows per page: 25 | Showing 1 - 25 Rows | Page 1 of 1</footer>
+
+            <div class="transaction-popover" id="transactionPopover" hidden>
+                <div class="tx-popover-header">
+                    <strong>Transaction Details</strong>
+                    <button type="button" id="txPopoverClose">x</button>
+                </div>
+                <div class="tx-popover-body" id="txPopoverBody"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const dateEl = document.getElementById('posDate');
+        const filter = document.getElementById('salesFilter');
+        const rows = document.querySelectorAll('#salesTable tbody tr');
+        const txLinks = document.querySelectorAll('.tx-link');
+        const popover = document.getElementById('transactionPopover');
+        const popoverBody = document.getElementById('txPopoverBody');
+        const popoverClose = document.getElementById('txPopoverClose');
+
+        function updateDate() {
+            dateEl.textContent = new Date().toLocaleDateString('en-US');
+        }
+
+        function applyFilter() {
+            const q = (filter.value || '').trim().toLowerCase();
+            rows.forEach((row) => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+
+        function money(v) {
+            return `P${Number(v || 0).toFixed(2)}`;
+        }
+
+        function openDetails(linkEl) {
+            const tx = JSON.parse(linkEl.dataset.transaction || '{}');
+            const details = tx.details || {};
+            const items = details.items || [];
+            const listBody = document.querySelector('.pos-list-body');
+
+            const itemsHtml = items.length
+                ? items.map((item) => `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.quantity}</td>
+                        <td>${money(item.unit_price)}</td>
+                        <td>${money(item.subtotal)}</td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="4">No item details available.</td></tr>';
+
+            popoverBody.innerHTML = `
+                <div class="tx-meta">
+                    <p><span>Transaction ID:</span> ${tx.transaction_id || '-'}</p>
+                    <p><span>Invoice No:</span> ${details.invoice_no || '-'}</p>
+                    <p><span>Date:</span> ${details.date || '-'} ${details.time || ''}</p>
+                    <p><span>Cashier:</span> ${details.cashier || '-'}</p>
+                </div>
+                <table class="tx-items">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Unit Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itemsHtml}</tbody>
+                </table>
+                <p class="tx-total"><span>Total:</span> <strong>${money(details.total_amount)}</strong></p>
+            `;
+
+            popover.hidden = false;
+
+            if (listBody) {
+                const bodyRect = listBody.getBoundingClientRect();
+                const linkRect = linkEl.getBoundingClientRect();
+
+                let top = linkRect.top - bodyRect.top - 14;
+                let left = linkRect.right - bodyRect.left + 28;
+
+                const maxLeft = listBody.clientWidth - popover.offsetWidth - 8;
+                const maxTop = listBody.clientHeight - popover.offsetHeight - 8;
+
+                left = Math.max(8, Math.min(left, maxLeft));
+                top = Math.max(8, Math.min(top, maxTop));
+
+                popover.style.left = `${left}px`;
+                popover.style.top = `${top}px`;
+
+                const rawArrowTop = (linkRect.top - bodyRect.top - top) + (linkRect.height / 2) - 9;
+                const clampedArrowTop = Math.max(14, Math.min(rawArrowTop, popover.offsetHeight - 20));
+                popover.style.setProperty('--tx-arrow-top', `${clampedArrowTop}px`);
+            }
+        }
+
+        function closeDetails() {
+            popover.hidden = true;
+        }
+
+        filter.addEventListener('input', applyFilter);
+        txLinks.forEach((link) => {
+            link.addEventListener('click', () => openDetails(link));
+        });
+        popoverClose.addEventListener('click', closeDetails);
+        document.addEventListener('click', (event) => {
+            if (popover.hidden) return;
+            if (popover.contains(event.target)) return;
+            if (event.target.closest('.tx-link')) return;
+            closeDetails();
+        });
+        updateDate();
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container pos-page">
+    <section class="pos-list-shell fade-up">
+        <header class="pos-list-header">
+            <h2>Billings</h2>
+            <span class="pos-date" id="posDate"></span>
+        </header>
+
+        <div class="pos-list-body">
+            <div class="pos-list-filters">
+                <input id="billingFilter" type="text" placeholder="Search" />
+            </div>
+
+            <table class="pos-list-table" id="billingTable">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Mode of Payment</th>
+                        <th>Total</th>
+                        <th>Date</th>
+                        <th>Ref.Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in billing_rows %}
+                    <tr>
+                        <td>{{ row.transaction_id }}</td>
+                        <td>{{ row.mode_payment }}</td>
+                        <td>₱{{ '{:.2f}'.format(row.total) }}</td>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.ref_number }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">No billing records yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <footer class="pos-list-footer">Rows per page: 25 | Showing 1 - 25 Rows | Page 1 of 1</footer>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const dateEl = document.getElementById('posDate');
+        const filter = document.getElementById('billingFilter');
+        const rows = document.querySelectorAll('#billingTable tbody tr');
+
+        function updateDate() {
+            dateEl.textContent = new Date().toLocaleDateString('en-US');
+        }
+
+        function applyFilter() {
+            const q = (filter.value || '').trim().toLowerCase();
+            rows.forEach((row) => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+
+        filter.addEventListener('input', applyFilter);
+        updateDate();
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container pos-page">
+    <form method="post" class="pos-shell fade-up" id="posForm">
+        <header class="pos-header">
+            <h2>POS Terminal</h2>
+            <span class="pos-date" id="posDate"></span>
+        </header>
+
+        <div class="pos-main-grid">
+            <section class="pos-cart">
+                <table class="pos-table">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Delete</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="posCartBody">
+                        <tr class="pos-cart-empty">
+                            <td colspan="5">No items in current order. Scan a barcode or add from list below.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <aside class="pos-summary">
+                <h3 class="pos-summary-title">Payment Details</h3>
+
+                <div class="pos-field">
+                    <label for="paymentMethod">Mode of Payment</label>
+                    <select id="paymentMethod" class="pos-payment">
+                        <option value="Cash">Cash</option>
+                        <option value="Maya">Maya</option>
+                        <option value="GCash">GCash</option>
+                    </select>
+                </div>
+
+                <div class="pos-field" id="cashField">
+                    <label for="cashTendered">Cash Tendered</label>
+                    <input id="cashTendered" type="number" min="0" step="0.01" value="0" />
+                </div>
+
+                <div class="pos-field" id="refField" hidden>
+                    <label for="referenceNo">Reference Number</label>
+                    <input id="referenceNo" type="text" placeholder="Enter Maya/GCash reference no." />
+                </div>
+
+                <div class="pos-summary-lines">
+                    <p><span>Sub Total:</span><strong id="summarySubTotal">₱0.00</strong></p>
+                    <p><span>Discount:</span><strong id="summaryDiscount">₱0.00</strong></p>
+                    <p class="grand-total"><span>Total:</span><strong id="summaryTotal">₱0.00</strong></p>
+                    <p><span>Cash:</span><strong id="summaryCash">₱0.00</strong></p>
+                    <p><span>Change:</span><strong id="summaryChange">₱0.00</strong></p>
+                    <p><span>Ref.No:</span><strong id="summaryRef">-</strong></p>
+                </div>
+
+                <button type="submit" class="pos-submit">Complete Sale</button>
+            </aside>
+        </div>
+
+        <section class="pos-catalog">
+            <div class="pos-search-wrap">
+                <input type="text" id="posSearch" placeholder="Scan barcode / enter SKU (press Enter)" autocomplete="off" />
+            </div>
+            <div id="scanToast" class="scan-toast" hidden></div>
+            <table class="pos-catalog-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Add</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr class="catalog-row" data-id="{{ p.id }}" data-sku="{{ p.sku }}" data-name="{{ p.name }}" data-category="{{ p.category }}" data-price="{{ p.unit_price }}" data-stock="{{ p.quantity }}" data-query="{{ (p.sku ~ ' ' ~ p.name ~ ' ' ~ p.category)|lower }}">
+                        <td>{{ p.sku }}</td>
+                        <td>{{ p.name }}</td>
+                        <td>{{ p.category }}</td>
+                        <td>{{ p.quantity }}</td>
+                        <td>₱{{ '{:.2f}'.format(p.unit_price) }}</td>
+                        <td><button type="button" class="pos-add-item">Add</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </form>
+</div>
+
+<script>
+    (function () {
+        const dateEl = document.getElementById('posDate');
+        const posForm = document.getElementById('posForm');
+        const cartBody = document.getElementById('posCartBody');
+        const searchInput = document.getElementById('posSearch');
+        const catalogRows = Array.from(document.querySelectorAll('.catalog-row'));
+        const paymentMethodEl = document.getElementById('paymentMethod');
+        const cashTenderedEl = document.getElementById('cashTendered');
+        const referenceNoEl = document.getElementById('referenceNo');
+        const cashFieldEl = document.getElementById('cashField');
+        const refFieldEl = document.getElementById('refField');
+        const scanToastEl = document.getElementById('scanToast');
+        const cart = new Map();
+        let toastTimer = null;
+
+        function updateDate() {
+            dateEl.textContent = new Date().toLocaleDateString('en-US');
+        }
+
+        function peso(v) {
+            return `₱${Number(v || 0).toFixed(2)}`;
+        }
+
+        function getRowData(row) {
+            return {
+                id: Number(row.dataset.id),
+                sku: String(row.dataset.sku || ''),
+                name: String(row.dataset.name || ''),
+                price: Number(row.dataset.price || 0),
+                stock: Number(row.dataset.stock || 0),
+            };
+        }
+
+        function renderCart() {
+            if (cart.size === 0) {
+                cartBody.innerHTML = '<tr class="pos-cart-empty"><td colspan="5">No items in current order. Scan a barcode or add from list below.</td></tr>';
+                updateTotals();
+                return;
+            }
+
+            const rows = [];
+            cart.forEach((item) => {
+                rows.push(`
+                    <tr class="pos-row" data-id="${item.id}">
+                        <td><strong>${item.name}</strong></td>
+                        <td>${peso(item.price)}</td>
+                        <td>
+                            <input type="number" class="pos-qty cart-qty" min="1" max="${item.stock}" value="${item.qty}" data-id="${item.id}" />
+                            <span class="pos-stock">${item.stock}</span>
+                        </td>
+                        <td><button type="button" class="pos-delete cart-delete" data-id="${item.id}">Delete</button></td>
+                        <td><span class="pos-subtotal">${peso(item.price * item.qty)}</span></td>
+                    </tr>
+                `);
+            });
+            cartBody.innerHTML = rows.join('');
+
+            cartBody.querySelectorAll('.cart-qty').forEach((input) => {
+                input.addEventListener('input', () => {
+                    const id = Number(input.dataset.id);
+                    const item = cart.get(id);
+                    if (!item) return;
+                    const value = Math.max(1, Math.min(item.stock, Number(input.value || 1)));
+                    item.qty = value;
+                    renderCart();
+                });
+            });
+
+            cartBody.querySelectorAll('.cart-delete').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    cart.delete(Number(btn.dataset.id));
+                    renderCart();
+                });
+            });
+
+            updateTotals();
+        }
+
+        function addItemByCatalogRow(row) {
+            const data = getRowData(row);
+            if (!data.id || data.stock <= 0) return;
+
+            const existing = cart.get(data.id);
+            if (existing) {
+                existing.qty = Math.min(existing.stock, existing.qty + 1);
+            } else {
+                cart.set(data.id, { ...data, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function addItemByScannedCode(code) {
+            const needle = String(code || '').trim().toLowerCase();
+            if (!needle) return false;
+            const exact = catalogRows.find((row) => String(row.dataset.sku || '').trim().toLowerCase() === needle);
+            if (exact) {
+                addItemByCatalogRow(exact);
+                return true;
+            }
+            return false;
+        }
+
+        function playTone(type) {
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return;
+                const ctx = new Ctx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type === 'error' ? 'sawtooth' : 'sine';
+                osc.frequency.value = type === 'error' ? 220 : 880;
+                gain.gain.value = 0.03;
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + (type === 'error' ? 0.16 : 0.08));
+            } catch (_e) {
+                // Optional audio feedback.
+            }
+        }
+
+        function showScanToast(message, toneType) {
+            if (!scanToastEl) return;
+            scanToastEl.textContent = message;
+            scanToastEl.classList.toggle('error', toneType === 'error');
+            scanToastEl.classList.toggle('success', toneType !== 'error');
+            scanToastEl.hidden = false;
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                scanToastEl.hidden = true;
+            }, 1600);
+            playTone(toneType);
+        }
+
+        function updateTotals() {
+            let subtotal = 0;
+            cart.forEach((item) => {
+                subtotal += item.price * item.qty;
+            });
+
+            const discount = 0;
+            const total = subtotal - discount;
+            const mode = paymentMethodEl.value;
+            const cashInput = Number(cashTenderedEl.value || 0);
+            const cash = mode === 'Cash' ? cashInput : total;
+            const change = mode === 'Cash' ? Math.max(0, cash - total) : 0;
+
+            let refNo = '-';
+            if (mode !== 'Cash') {
+                const userRef = (referenceNoEl.value || '').trim();
+                refNo = userRef || 'Pending';
+            }
+
+            document.getElementById('summarySubTotal').textContent = peso(subtotal);
+            document.getElementById('summaryDiscount').textContent = peso(discount);
+            document.getElementById('summaryTotal').textContent = peso(total);
+            document.getElementById('summaryCash').textContent = peso(cash);
+            document.getElementById('summaryChange').textContent = peso(change);
+            document.getElementById('summaryRef').textContent = refNo;
+        }
+
+        function updatePaymentFields() {
+            const isCash = paymentMethodEl.value === 'Cash';
+            cashFieldEl.hidden = !isCash;
+            refFieldEl.hidden = isCash;
+            updateTotals();
+        }
+
+        function filterCatalog() {
+            const query = (searchInput.value || '').trim().toLowerCase();
+            catalogRows.forEach((row) => {
+                row.style.display = row.dataset.query.includes(query) ? '' : 'none';
+            });
+        }
+
+        catalogRows.forEach((row) => {
+            const addBtn = row.querySelector('.pos-add-item');
+            if (addBtn) addBtn.addEventListener('click', () => addItemByCatalogRow(row));
+        });
+
+        paymentMethodEl.addEventListener('change', updatePaymentFields);
+        cashTenderedEl.addEventListener('input', updateTotals);
+        referenceNoEl.addEventListener('input', updateTotals);
+
+        searchInput.addEventListener('input', filterCatalog);
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            const scanned = searchInput.value;
+            const matched = addItemByScannedCode(scanned);
+            if (matched) {
+                showScanToast('Item added to current order.', 'success');
+                searchInput.value = '';
+                filterCatalog();
+            } else {
+                showScanToast(`Barcode/SKU not found: ${String(scanned || '').trim() || '(empty)'}`, 'error');
+                searchInput.select();
+            }
+        });
+
+        posForm.addEventListener('submit', (event) => {
+            if (cart.size === 0) {
+                event.preventDefault();
+                alert('No scanned items in current order.');
+                return;
+            }
+
+            posForm.querySelectorAll('.runtime-line-item').forEach((el) => el.remove());
+            cart.forEach((item) => {
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'product_id';
+                idInput.value = String(item.id);
+                idInput.className = 'runtime-line-item';
+
+                const qtyInput = document.createElement('input');
+                qtyInput.type = 'hidden';
+                qtyInput.name = 'quantity';
+                qtyInput.value = String(item.qty);
+                qtyInput.className = 'runtime-line-item';
+
+                posForm.appendChild(idInput);
+                posForm.appendChild(qtyInput);
+            });
+        });
+
+        updateDate();
+        updatePaymentFields();
+        renderCart();
+        searchInput.focus();
+    })();
+</script>
+{% endblock %}

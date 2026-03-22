@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Receipt {{ sale.invoice_no }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 16px;
+            color: #333;
+        }
+        .wrapper { 
+            max-width: 400px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0d8f5b;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        .header h1 { 
+            font-size: 18px; 
+            color: #0d8f5b;
+            margin: 0 0 6px 0;
+        }
+        .header p { 
+            font-size: 12px; 
+            color: #888;
+            margin: 2px 0;
+        }
+        .receipt-info {
+            background-color: #ecf8f1;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #333;
+        }
+        .receipt-info p { margin: 4px 0; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 12px 0; 
+            font-size: 12px;
+        }
+        thead { 
+            background-color: #f0f0f0; 
+            border-top: 1px solid #ddd;
+            border-bottom: 2px solid #0d8f5b;
+        }
+        th { 
+            padding: 8px 4px; 
+            text-align: left; 
+            font-weight: 600;
+            color: #333;
+        }
+        td { 
+            padding: 8px 4px; 
+            border-bottom: 1px solid #eee;
+        }
+        td.right { text-align: right; }
+        .total-row {
+            background-color: #ecf8f1;
+            font-weight: 600;
+            border-bottom: 2px solid #0d8f5b !important;
+        }
+        .total-amount { 
+            color: #0d8f5b; 
+            font-size: 14px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #ddd;
+            font-size: 11px;
+            color: #999;
+        }
+        .actions { 
+            margin-top: 16px; 
+            display: flex; 
+            gap: 8px;
+            justify-content: center;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:first-child {
+            background-color: #0d8f5b;
+            color: white;
+        }
+        button:first-child:hover {
+            background-color: #0a6d47;
+        }
+        button:last-child {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        button:last-child:hover {
+            background-color: #e0e0e0;
+        }
+        @media print { 
+            body { background: white; padding: 0; }
+            .wrapper { box-shadow: none; padding: 0; }
+            .actions { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="header">
+        <h1>🏥 Nica Xandra Pharmacy</h1>
+        <p>Trusted Healthcare Partner</p>
+    </div>
+
+    <div class="receipt-info">
+        <p><strong>Receipt #:</strong> {{ sale.invoice_no }}</p>
+        <p><strong>Date:</strong> {{ sale.sold_at.strftime('%B %d, %Y') }}</p>
+        <p><strong>Time:</strong> {{ sale.sold_at.strftime('%H:%M:%S') }}</p>
+        <p><strong>Cashier:</strong> {{ sale.cashier.username }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item Description</th>
+                <th class="right">Qty</th>
+                <th class="right">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sale.items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td class="right">{{ item.quantity }}</td>
+                    <td class="right">PHP {{ '%.2f'|format(item.subtotal) }}</td>
+                </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="2" style="text-align: left;"><strong>TOTAL AMOUNT</strong></td>
+                <td class="right total-amount">PHP {{ '%.2f'|format(sale.total_amount) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Thank you for your purchase!</p>
+        <p>Please visit us again.</p>
+    </div>
+
+    <div class="actions">
+        <button onclick="window.print()">🖨️ Print Receipt</button>
+        <button onclick="window.close()">✕ Close</button>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Data Import Wizard</h2>
+    
+    <div class="grid two-col">
+        <!-- Inventory Import Card -->
+        <div class="card fade-up">
+            <h3 style="margin-top: 0; color: #0d8f5b;">📦 Inventory Import</h3>
+            <form method="post" style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="form-group">
+                    <label for="inventory_path">CSV File Path</label>
+                    <input type="text" id="inventory_path" name="inventory_path" value="{{ default_inventory }}" 
+                           placeholder="e.g., data/inventory.csv" />
+                </div>
+                
+                <label style="display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; gap: 8px;">
+                    <input type="checkbox" name="overwrite_inventory" checked />
+                    <span>Overwrite existing product quantities</span>
+                </label>
+                
+                <p style="font-size: 0.85rem; color: #888; margin: 8px 0 0 0;">
+                    Loads products, stock levels, and pricing from your inventory CSV.
+                </p>
+                
+                <button type="submit" name="import_type" value="inventory" style="margin-top: 8px;">
+                    Import Inventory
+                </button>
+            </form>
+        </div>
+
+        <!-- Sales Import Card -->
+        <div class="card fade-up delay-1">
+            <h3 style="margin-top: 0; color: #0d8f5b;">💳 Sales Import</h3>
+            <form method="post" style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="form-group">
+                    <label for="sales_path">CSV File Path</label>
+                    <input type="text" id="sales_path" name="sales_path" value="{{ default_sales }}" 
+                           placeholder="e.g., data/sales.csv" />
+                </div>
+                
+                <label style="display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; gap: 8px;">
+                    <input type="checkbox" name="reset_sales" checked />
+                    <span>Clear existing sales before import</span>
+                </label>
+                
+                <p style="font-size: 0.85rem; color: #888; margin: 8px 0 0 0;">
+                    Loads transaction history, revenue, and customer data from your sales CSV.
+                </p>
+                
+                <button type="submit" name="import_type" value="sales" style="margin-top: 8px;">
+                    Import Sales
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Information Card -->
+    <div class="card fade-up delay-2" style="background-color: #ecf8f1; border-left: 4px solid #0d8f5b;">
+        <h4 style="margin: 0 0 12px 0; color: #0d8f5b;">📋 Import Guidelines</h4>
+        <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: #666;">
+            <li>Ensure CSV files are properly formatted with headers in the first row</li>
+            <li>Required inventory columns: SKU, Name, Category, Price, Quantity, Reorder Point, Expiry Date</li>
+            <li>Required sales columns: Transaction ID, Date, Time, Product Name, Quantity, Price, Cashier</li>
+            <li>Import process will validate data before committing to database</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - Nica Xandra PMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: linear-gradient(135deg, #ecf8f1 0%, #e8f4f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(13, 143, 91, 0.15);
+            max-width: 420px;
+            width: 100%;
+            padding: 40px 32px;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-header h1 {
+            font-size: 28px;
+            color: #0d8f5b;
+            margin: 0 0 8px 0;
+            font-weight: 700;
+        }
+        .login-header p {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            padding: 12px 16px;
+            border: 1px solid #d4e9dd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Manrope', sans-serif;
+            transition: all 0.2s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #7fcaa4;
+            box-shadow: 0 0 0 3px rgba(13, 143, 91, 0.1);
+        }
+        .alerts {
+            margin-bottom: 20px;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .alert.danger {
+            background-color: #fff2f0;
+            color: #9f2430;
+            border-left: 4px solid #9f2430;
+        }
+        .alert.info {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+        .alert.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        button[type="submit"] {
+            padding: 12px 16px;
+            background-color: #0d8f5b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Manrope', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button[type="submit"]:hover {
+            background-color: #0a6d47;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 143, 91, 0.3);
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .login-footer p {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+        .login-footer a {
+            color: #0d8f5b;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .login-footer a:hover {
+            color: #0a6d47;
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+        .back-link a {
+            font-size: 13px;
+            color: #0d8f5b;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .back-link a:hover {
+            color: #0a6d47;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="back-link">
+        <a href="{{ url_for('home') }}">← Back to Home</a>
+    </div>
+
+    <div class="login-header">
+        <h1>🏥 Nica Xandra</h1>
+        <p>Pharmacy Management System</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alerts">
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="post">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required placeholder="Enter your username" autofocus />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Enter your password" />
+        </div>
+
+        <div class="button-group">
+            <button type="submit">Sign In</button>
+        </div>
+    </form>
+
+    <div class="login-footer">
+        <p>Don't have an account? <a href="{{ url_for('signup') }}">Create one here</a></p>
+    </div>
+</div>
+</body>
+</html>

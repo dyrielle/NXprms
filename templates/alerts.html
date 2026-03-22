@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container alert-module-page">
+    <section class="alert-module-shell fade-up">
+        <header class="alert-module-head">
+            <h2>Notifications</h2>
+            <span class="dash-date-pill" id="alertsDate">03/01/2026</span>
+        </header>
+
+        <div class="alert-module-body">
+            <div class="alert-summary-grid">
+                <article class="alert-summary-card out-of-stock-card">
+                    <div class="alert-summary-icon">
+                        <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                    </div>
+                    <div class="alert-summary-content">
+                        <h3>{{ out_of_stock_count }}</h3>
+                        <p>Out of Stock</p>
+                    </div>
+                </article>
+
+                <article class="alert-summary-card low-stock-card">
+                    <div class="alert-summary-icon">
+                        <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                    </div>
+                    <div class="alert-summary-content">
+                        <h3>{{ low_stock_count }}</h3>
+                        <p>Low Stock</p>
+                    </div>
+                </article>
+
+                <article class="alert-summary-card expiry-card">
+                    <div class="alert-summary-icon">
+                        <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                    </div>
+                    <div class="alert-summary-content">
+                        <h3>{{ expiring_count }}</h3>
+                        <p>Near Expiry</p>
+                    </div>
+                </article>
+            </div>
+
+            <div class="alert-tabs">
+                <a class="alert-tab-btn {% if selected_tab == 'all' %}active{% endif %}" href="{{ url_for('alerts', tab='all', page=1) }}">
+                    <span class="material-symbols-outlined">view_list</span>
+                    All Alerts ({{ out_of_stock_count + low_stock_count + expiring_count }})
+                </a>
+                <a class="alert-tab-btn {% if selected_tab == 'out-of-stock' %}active{% endif %}" href="{{ url_for('alerts', tab='out-of-stock', page=1) }}">
+                    <span class="material-symbols-outlined">block</span>
+                    Out of Stock ({{ out_of_stock_count }})
+                </a>
+                <a class="alert-tab-btn {% if selected_tab == 'low-stock' %}active{% endif %}" href="{{ url_for('alerts', tab='low-stock', page=1) }}">
+                    <span class="material-symbols-outlined">warning</span>
+                    Low Stock ({{ low_stock_count }})
+                </a>
+                <a class="alert-tab-btn {% if selected_tab == 'near-expiry' %}active{% endif %}" href="{{ url_for('alerts', tab='near-expiry', page=1) }}">
+                    <span class="material-symbols-outlined">schedule</span>
+                    Near Expiry ({{ expiring_count }})
+                </a>
+            </div>
+
+            <div class="alert-content-area">
+                {% if selected_tab == 'all' %}
+                {% if all_alerts_feed %}
+                <div class="fb-alert-feed">
+                    {% for alert in all_alerts_feed %}
+                    <article class="fb-alert-item {{ alert.type }}">
+                        <div class="fb-alert-avatar">
+                            <span class="material-symbols-outlined" aria-hidden="true">
+                                {% if alert.type == 'out-of-stock' %}block{% elif alert.type == 'low-stock' %}warning{% else %}schedule{% endif %}
+                            </span>
+                        </div>
+                        <div class="fb-alert-main">
+                            <p class="fb-alert-message">
+                                <strong>{{ alert.title }}</strong>
+                                {{ alert.summary }}
+                            </p>
+                            <div class="fb-alert-meta">{{ alert.meta }} | {{ alert.category }}</div>
+                        </div>
+                        <a href="{{ url_for('inventory_product_info', product_id=alert.id) }}" class="fb-alert-link">View</a>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert-empty-state">
+                    <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                    <h3>All Clear!</h3>
+                    <p>No alerts at this time. All inventory is healthy.</p>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if selected_tab == 'out-of-stock' %}
+                {% if out_of_stock_items %}
+                <div class="alert-section">
+                    <h3 class="alert-section-title">
+                        <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                        Out of Stock Items
+                    </h3>
+                    <div class="alert-cards-grid">
+                        {% for item in out_of_stock_items %}
+                        <article class="alert-card out-of-stock-alert">
+                            <div class="alert-card-header">
+                                <div class="alert-card-title">
+                                    <h4>{{ item.name }}</h4>
+                                    <span class="alert-card-sku">{{ item.sku }}</span>
+                                </div>
+                                <span class="alert-badge critical">
+                                    <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                                    Out of Stock
+                                </span>
+                            </div>
+                            <div class="alert-card-body">
+                                <div class="alert-row">
+                                    <span class="alert-label">Category</span>
+                                    <span class="alert-value">{{ item.category }}</span>
+                                </div>
+                                <div class="alert-row">
+                                    <span class="alert-label">Current Stock</span>
+                                    <span class="alert-value alert-amount">{{ item.quantity }} units</span>
+                                </div>
+                            </div>
+                            <div class="alert-card-footer">
+                                <a href="{{ url_for('inventory_product_info', product_id=item.id) }}" class="alert-action-btn">
+                                    <span class="material-symbols-outlined">open_in_new</span>
+                                    View Details
+                                </a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert-empty-state">
+                    <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                    <h3>No Out of Stock Items</h3>
+                    <p>Everything in this category is currently available.</p>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if selected_tab == 'low-stock' %}
+                {% if low_stock_items %}
+                <div class="alert-section">
+                    <h3 class="alert-section-title">
+                        <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                        Low Stock Items
+                    </h3>
+                    <div class="alert-cards-grid">
+                        {% for item in low_stock_items %}
+                        <article class="alert-card low-stock-alert">
+                            <div class="alert-card-header">
+                                <div class="alert-card-title">
+                                    <h4>{{ item.name }}</h4>
+                                    <span class="alert-card-sku">{{ item.sku }}</span>
+                                </div>
+                                <span class="alert-badge warning">
+                                    <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                                    Low Stock
+                                </span>
+                            </div>
+                            <div class="alert-card-body">
+                                <div class="alert-row">
+                                    <span class="alert-label">Current / Reorder</span>
+                                    <span class="alert-value">{{ item.quantity }} / {{ item.reorder_point }} units</span>
+                                </div>
+                                <div class="alert-progress">
+                                    <div class="alert-progress-bar" style="width: {{ item.percent_filled }}%;"></div>
+                                </div>
+                                <div class="alert-row">
+                                    <span class="alert-label">Shortage</span>
+                                    <span class="alert-value alert-shortage">Need {{ item.gap }} more units</span>
+                                </div>
+                            </div>
+                            <div class="alert-card-footer">
+                                <a href="{{ url_for('inventory_product_info', product_id=item.id) }}" class="alert-action-btn">
+                                    <span class="material-symbols-outlined">open_in_new</span>
+                                    View Details
+                                </a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert-empty-state">
+                    <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                    <h3>No Low Stock Items</h3>
+                    <p>All products are above their reorder thresholds.</p>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if selected_tab == 'near-expiry' %}
+                {% if expiring_items %}
+                <div class="alert-section">
+                    <h3 class="alert-section-title">
+                        <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                        Expiring Soon
+                    </h3>
+                    <div class="alert-cards-grid">
+                        {% for item in expiring_items %}
+                        <article class="alert-card expiry-alert {% if item.urgency == 'critical' %}expiry-critical{% else %}expiry-warning{% endif %}">
+                            <div class="alert-card-header">
+                                <div class="alert-card-title">
+                                    <h4>{{ item.name }}</h4>
+                                    <span class="alert-card-sku">{{ item.sku }}</span>
+                                </div>
+                                <span class="alert-badge {% if item.urgency == 'critical' %}critical{% else %}warning{% endif %}">
+                                    <span class="material-symbols-outlined" aria-hidden="true">{% if item.urgency == 'critical' %}error{% else %}schedule{% endif %}</span>
+                                    {% if item.urgency == 'critical' %}Critical{% else %}Warning{% endif %}
+                                </span>
+                            </div>
+                            <div class="alert-card-body">
+                                <div class="alert-row">
+                                    <span class="alert-label">Expiration Date</span>
+                                    <span class="alert-value">{{ item.expiration_date }}</span>
+                                </div>
+                                <div class="alert-row">
+                                    <span class="alert-label">Days Left</span>
+                                    <span class="alert-value {% if item.days_left <= 7 %}alert-critical-days{% else %}alert-warning-days{% endif %}">
+                                        {% if item.days_left == 0 %}
+                                        Expires Today!
+                                        {% elif item.days_left == 1 %}
+                                        1 day left
+                                        {% else %}
+                                        {{ item.days_left }} days left
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="alert-row">
+                                    <span class="alert-label">Category</span>
+                                    <span class="alert-value">{{ item.category }}</span>
+                                </div>
+                            </div>
+                            <div class="alert-card-footer">
+                                <a href="{{ url_for('inventory_product_info', product_id=item.id) }}" class="alert-action-btn">
+                                    <span class="material-symbols-outlined">open_in_new</span>
+                                    View Details
+                                </a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert-empty-state">
+                    <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                    <h3>No Near Expiry Items</h3>
+                    <p>No product expires within the next 60 days.</p>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if total_pages > 1 %}
+                <nav class="alert-pager" aria-label="Alert list pagination">
+                    {% if has_prev %}
+                    <a class="alert-page-btn" href="{{ url_for('alerts', tab=selected_tab, page=page - 1) }}">Previous</a>
+                    {% else %}
+                    <span class="alert-page-btn disabled">Previous</span>
+                    {% endif %}
+                    <span class="alert-page-state">Page {{ page }} of {{ total_pages }}</span>
+                    {% if has_next %}
+                    <a class="alert-page-btn" href="{{ url_for('alerts', tab=selected_tab, page=page + 1) }}">Next</a>
+                    {% else %}
+                    <span class="alert-page-btn disabled">Next</span>
+                    {% endif %}
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const dateEl = document.getElementById('alertsDate');
+        if (dateEl) {
+            dateEl.textContent = new Date().toLocaleDateString('en-US');
+        }
+    })();
+</script>
+{% endblock %}

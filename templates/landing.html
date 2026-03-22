@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nica Xandra PMS - Pharmacy Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <style>
+        body.landing {
+            margin: 0;
+            min-height: 100vh;
+            background: #eeeeee;
+            color: #0d0d0d;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .landing-shell {
+            width: min(100%, 1365px);
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            padding: 1.65rem 3.05rem 2.3rem;
+        }
+
+        header.landing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 3;
+        }
+
+        .landing-logo {
+            text-decoration: none;
+            color: #0d0d0d;
+            display: inline-flex;
+            flex-direction: column;
+            gap: 0.08rem;
+        }
+
+        .logo-tag {
+            font-size: 0.8rem;
+            color: #bababa;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .logo-mark {
+            width: 54px;
+            height: 54px;
+            display: block;
+        }
+
+        .landing-nav {
+            display: flex;
+            gap: 3.15rem;
+            align-items: center;
+            margin-right: 0.7rem;
+        }
+
+        .landing-nav a,
+        .signin-btn {
+            text-decoration: none;
+            color: #111;
+            background: transparent;
+            border: none;
+            padding: 0;
+            font-size: 1.02rem;
+            font-weight: 500;
+            line-height: 1;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity 0.18s ease;
+        }
+
+        .landing-nav a:hover,
+        .signin-btn:hover {
+            opacity: 0.66;
+        }
+
+        .landing-hero {
+            position: relative;
+            min-height: calc(100vh - 5.6rem);
+            display: flex;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .hero-content {
+            max-width: 520px;
+            padding-left: 0.85rem;
+            transform: translateY(-3.3rem);
+        }
+
+        .hero-content h1 {
+            margin: 0;
+            font-size: clamp(4.4rem, 5.2vw, 5.4rem);
+            line-height: 1.22;
+            letter-spacing: 0;
+            font-weight: 800;
+            color: #000;
+        }
+
+        .hero-shape {
+            position: absolute;
+            right: -30vw;
+            bottom: -56vw;
+            width: 88vw;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            background: radial-gradient(circle at 28% 24%, #1fa179 0%, #148f6b 64%, #0f7f61 100%);
+            z-index: 1;
+        }
+
+        @media (max-width: 1100px) {
+            .landing-shell {
+                padding: 1.6rem 1.4rem 2rem;
+            }
+
+            .landing-nav {
+                gap: 1.3rem;
+            }
+
+            .landing-nav a,
+            .signin-btn {
+                font-size: 0.92rem;
+            }
+
+            .hero-content {
+                padding-left: 0.1rem;
+                transform: translateY(-1.6rem);
+            }
+
+            .hero-shape {
+                right: -34vw;
+                bottom: -37vw;
+                width: 90vw;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .landing-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .landing-nav {
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .landing-hero {
+                align-items: flex-start;
+                padding-top: 2.2rem;
+            }
+
+            .hero-content {
+                transform: translateY(0);
+            }
+
+            .hero-content h1 {
+                font-size: clamp(2rem, 9.4vw, 3rem);
+                line-height: 1.15;
+            }
+
+            .hero-shape {
+                right: -65vw;
+                bottom: -68vw;
+                width: 128vw;
+            }
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(160deg, #ffffff 0%, #f8f8f8 100%);
+            padding: 2.4rem;
+            border-radius: 18px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.2);
+            border: 1px solid #ececec;
+            width: 90%;
+            max-width: 700px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.8rem;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 2.4rem;
+            line-height: 1.05;
+            white-space: nowrap;
+            color: #000;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            width: auto;
+            min-width: auto;
+            padding: 0.2rem;
+            font-size: 1.8rem;
+            line-height: 1;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.3rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-size: 1.12rem;
+        }
+
+        .form-group input {
+            padding: 0.95rem 1rem;
+            border: 1px solid #d0d0d0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: #f7f7f7;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent, #0d8f5b);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(13, 143, 91, 0.12);
+        }
+
+        .password-wrap {
+            position: relative;
+        }
+
+        .password-wrap input {
+            padding-right: 3rem;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: #666;
+            width: auto;
+            min-width: auto;
+            padding: 0.2rem;
+            cursor: pointer;
+            font-size: 1.15rem;
+            line-height: 1;
+        }
+
+        .toggle-password:hover {
+            color: #111;
+        }
+
+        .modal-button {
+            padding: 0.9rem;
+            background: var(--accent, #0d8f5b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.12rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.8rem;
+        }
+
+        .modal-button:hover {
+            background: var(--accent-2, #33b07f);
+            transform: translateY(-2px);
+        }
+
+        .modal-footer {
+            text-align: center;
+            margin-top: 1.7rem;
+            font-size: 1.05rem;
+        }
+
+        .modal-footer a {
+            color: var(--accent, #0d8f5b);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .modal-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .alert.error {
+            background: #ffe0e0;
+            color: #c00;
+            border: 1px solid #ffb3b3;
+        }
+
+        @media (max-width: 760px) {
+            .modal-content {
+                padding: 1.4rem;
+                max-width: 95%;
+            }
+
+            .modal-header h2 {
+                font-size: 1.95rem;
+            }
+
+            .form-group label {
+                font-size: 1rem;
+            }
+
+            .modal-button {
+                font-size: 1.02rem;
+            }
+
+            .modal-footer {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="landing">
+    <div class="landing-shell">
+        <header class="landing-header">
+            <a href="/" class="landing-logo">
+                <span class="logo-tag">Lo...</span>
+                <svg class="logo-mark" viewBox="0 0 56 56" aria-label="NX logo" role="img">
+                    <path d="M6 10h6v23h-6z" fill="#0b0b0b"></path>
+                    <path d="M16 10h6l10 14V10h6v32h-6L22 28v14h-6z" fill="#0b0b0b"></path>
+                    <path d="M11 46L45 10" stroke="#0b0b0b" stroke-width="2.3" stroke-linecap="round"></path>
+                    <path d="M27 27l16 19" stroke="#0b0b0b" stroke-width="2.3" stroke-linecap="round"></path>
+                </svg>
+            </a>
+            <nav class="landing-nav">
+                <a href="#mission">Mission</a>
+                <a href="#vision">Vision</a>
+                <a href="#about">About</a>
+                <button class="signin-btn" onclick="openLoginModal()">Sign In →</button>
+            </nav>
+        </header>
+
+        <section class="landing-hero">
+            <div class="hero-content">
+                <h1>Nica Xandra<br />Pharmacy<br />Management<br />System</h1>
+            </div>
+            <div class="hero-shape"></div>
+        </section>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Sign In</h2>
+                <button class="close-btn" onclick="closeLoginModal()">&times;</button>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="post" action="{{ url_for('login') }}" class="modal-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrap">
+                        <input type="password" id="password" name="password" required />
+                        <button type="button" class="toggle-password" aria-label="Show password" onclick="togglePassword('password', this)">👁</button>
+                    </div>
+                </div>
+                <button type="submit" class="modal-button">Sign In</button>
+            </form>
+            <div class="modal-footer">
+                Need an account? <a href="#" onclick="switchToSignupModal(); return false;">Create one</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Account</h2>
+                <button class="close-btn" onclick="closeSignupModal()">&times;</button>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="post" action="{{ url_for('signup') }}" class="modal-form">
+                <div class="form-group">
+                    <label for="signup_username">Username</label>
+                    <input type="text" id="signup_username" name="username" required />
+                </div>
+                <div class="form-group">
+                    <label for="signup_password">Password (min 8 characters)</label>
+                    <div class="password-wrap">
+                        <input type="password" id="signup_password" name="password" minlength="8" required />
+                        <button type="button" class="toggle-password" aria-label="Show password" onclick="togglePassword('signup_password', this)">👁</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="signup_confirm">Confirm Password</label>
+                    <div class="password-wrap">
+                        <input type="password" id="signup_confirm" name="confirm_password" minlength="8" required />
+                        <button type="button" class="toggle-password" aria-label="Show password" onclick="togglePassword('signup_confirm', this)">👁</button>
+                    </div>
+                </div>
+                <button type="submit" class="modal-button">Create Account</button>
+            </form>
+            <div class="modal-footer">
+                Already have an account? <a href="#" onclick="switchToLoginModal(); return false;">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.add('show');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('show');
+        }
+
+        function closeSignupModal() {
+            document.getElementById('signupModal').classList.remove('show');
+        }
+
+        function switchToSignupModal() {
+            closeLoginModal();
+            document.getElementById('signupModal').classList.add('show');
+        }
+
+        function switchToLoginModal() {
+            closeSignupModal();
+            openLoginModal();
+        }
+
+        function togglePassword(inputId, buttonEl) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            buttonEl.textContent = isHidden ? '🙈' : '👁';
+            buttonEl.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const loginModal = document.getElementById('loginModal');
+            const signupModal = document.getElementById('signupModal');
+            if (event.target === loginModal) {
+                closeLoginModal();
+            }
+            if (event.target === signupModal) {
+                closeSignupModal();
+            }
+        };
+    </script>
+</body>
+</html>

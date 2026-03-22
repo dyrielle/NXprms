@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container inv-module-page">
+    <section class="inv-module-shell fade-up">
+        <header class="inv-module-head">
+            <h2>Inventory</h2>
+            <span class="dash-date-pill" id="inventoryInfoDate">03/01/2026</span>
+        </header>
+
+        <div class="inv-module-body">
+            <div class="inv-info-title-row">
+                <h3><span>Inventory</span> <span class="sep">></span> Product Info</h3>
+                <a href="{{ url_for('inventory_new') }}" class="inv-edit-btn">
+                    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    <span>Edit Details</span>
+                </a>
+            </div>
+
+            <div class="inv-info-grid two-up">
+                <article class="inv-info-card">
+                    <h4>Product Name</h4>
+                    <div class="inv-info-values three">
+                        <div><strong>{{ product.name }}</strong><small>Name</small></div>
+                        <div><strong>{{ product.sku }}</strong><small>Code</small></div>
+                        <div><strong>{{ product.category }}</strong><small>Category</small></div>
+                    </div>
+                </article>
+
+                <article class="inv-info-card">
+                    <h4>Inventory in Qty</h4>
+                    <div class="inv-info-values three">
+                        <div><strong>{{ qty_piece }}</strong><small>Per Piece</small></div>
+                        <div><strong>{{ qty_strip }}</strong><small>Per Strip</small></div>
+                        <div><strong>{{ product.quantity }}</strong><small>Stock Left</small></div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="inv-info-grid two-split">
+                <article class="inv-info-card">
+                    <h4>Unit Price</h4>
+                    <div class="inv-info-values two">
+                        <div><strong>{{ '%.2f'|format(unit_price_piece) }}</strong><small>Per Piece</small></div>
+                        <div><strong>{{ '%.2f'|format(unit_price_strip) }}</strong><small>Per Strip</small></div>
+                    </div>
+                </article>
+
+                <article class="inv-info-card">
+                    <h4>Expiration Date</h4>
+                    <div class="inv-info-values one">
+                        <div><strong>{{ product.expiration_date if product.expiration_date else 'N/A' }}</strong></div>
+                    </div>
+                </article>
+            </div>
+
+            <article class="inv-info-card full">
+                <h4>Description</h4>
+                <p class="inv-description-text">
+                    Product profile for {{ product.name }}. You can extend this section later with richer notes like dosage guidance,
+                    side effects, and storage reminders once product descriptions are stored in the database.
+                </p>
+            </article>
+
+            <form method="post" action="{{ url_for('inventory_delete', product_id=product.id) }}" onsubmit="return confirm('Delete this medicine?');">
+                <button type="submit" class="inv-delete-btn">
+                    <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                    <span>Delete Medicine</span>
+                </button>
+            </form>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const dateEl = document.getElementById('inventoryInfoDate');
+        if (dateEl) {
+            dateEl.textContent = new Date().toLocaleDateString('en-US');
+        }
+    })();
+</script>
+{% endblock %}
