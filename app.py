@@ -113,6 +113,11 @@ class ImportedSaleRow(db.Model):
     sale = db.relationship("Sale")
 
 
+# Initialize database tables at app startup (works in gunicorn + Railway too)
+with app.app_context():
+    db.create_all()
+
+
 @login_manager.user_loader
 def load_user(user_id: str) -> User | None:
     return db.session.get(User, int(user_id))
