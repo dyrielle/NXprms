@@ -1071,6 +1071,7 @@ def reports():
 
     sales_rows = [
         {
+            "source": "Sales",
             "transaction_date": row.sold_at.strftime("%m/%d/%Y"),
             "product_name": row.name,
             "code": row.sku,
@@ -1095,15 +1096,27 @@ def reports():
         )
         inventory_rows.append(
             {
-                "size": product.reorder_point,
+                "source": "Inventory",
+                "transaction_date": "-",
+                "product_name": product.name,
+                "code": product.sku,
                 "quantity": product.quantity,
                 "unit_price": float(product.unit_price),
                 "total_sales": float(total_sales),
                 "payment_method": "Cash",
                 "type": infer_type(product.category),
                 "category": product.category,
+                "current_stock": product.quantity,
             }
         )
+
+    report_rows = [
+        {
+            **row,
+            "current_stock": "-",
+        }
+        for row in sales_rows
+    ] + inventory_rows
 
     categories = [
         row[0]
@@ -1114,8 +1127,7 @@ def reports():
 
     return render_template(
         "reports.html",
-        sales_rows=sales_rows,
-        inventory_rows=inventory_rows,
+        report_rows=report_rows,
         categories=categories,
         report_types=report_types,
     )
