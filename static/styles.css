@@ -2664,6 +2664,44 @@ select:focus {
     box-shadow: 0 0 0 4px #8fe0b626;
 }
 
+.password-field {
+    position: relative;
+}
+
+.password-field input {
+    padding-right: 42px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 7px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: #4d695a;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.password-toggle .material-symbols-outlined {
+    font-size: 19px;
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+}
+
+.password-toggle:hover {
+    background: #eaf7f0;
+    transform: translateY(-50%);
+    box-shadow: none;
+}
+
 button {
     background: linear-gradient(120deg, var(--accent), var(--accent-2));
     color: #fff;

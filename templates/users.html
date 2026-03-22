@@ -15,7 +15,12 @@
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Minimum 8 characters" />
+                <div class="password-field">
+                    <input type="password" id="password" name="password" required placeholder="Minimum 8 characters" />
+                    <button type="button" class="password-toggle" data-target="password" aria-label="Show password">
+                        <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                    </button>
+                </div>
             </div>
             
             <div class="form-group">
@@ -67,4 +72,19 @@
         {% endif %}
     </div>
 </div>
+<script>
+    document.querySelectorAll('.password-toggle[data-target]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            const input = targetId ? document.getElementById(targetId) : null;
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (!input || !icon) return;
+
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.textContent = show ? 'visibility_off' : 'visibility';
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        });
+    });
+</script>
 {% endblock %}

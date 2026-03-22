@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -73,6 +74,36 @@
             outline: none;
             border-color: #7fcaa4;
             box-shadow: 0 0 0 3px rgba(13, 143, 91, 0.1);
+        }
+        .password-field {
+            position: relative;
+        }
+        .password-field input {
+            padding-right: 44px;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: #4d695a;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .password-toggle:hover {
+            background: #ecf8f1;
+        }
+        .password-toggle .material-symbols-outlined {
+            font-size: 19px;
+            font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;
         }
         .password-hint {
             font-size: 12px;
@@ -197,13 +228,23 @@
 
         <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" minlength="8" required placeholder="Min 8 characters" />
+            <div class="password-field">
+                <input type="password" id="password" name="password" minlength="8" required placeholder="Min 8 characters" />
+                <button type="button" class="password-toggle" data-target="password" aria-label="Show password">
+                    <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                </button>
+            </div>
             <p class="password-hint">🔒 Use a strong password with letters, numbers, and symbols</p>
         </div>
 
         <div class="form-group">
             <label for="confirm_password">Confirm Password</label>
-            <input type="password" id="confirm_password" name="confirm_password" minlength="8" required placeholder="Confirm your password" />
+            <div class="password-field">
+                <input type="password" id="confirm_password" name="confirm_password" minlength="8" required placeholder="Confirm your password" />
+                <button type="button" class="password-toggle" data-target="confirm_password" aria-label="Show password">
+                    <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                </button>
+            </div>
         </div>
 
         <div class="button-group">
@@ -215,5 +256,20 @@
         <p>Already have an account? <a href="{{ url_for('login') }}">Sign in here</a></p>
     </div>
 </div>
+<script>
+    document.querySelectorAll('.password-toggle[data-target]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            const input = targetId ? document.getElementById(targetId) : null;
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (!input || !icon) return;
+
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.textContent = show ? 'visibility_off' : 'visibility';
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        });
+    });
+</script>
 </body>
 </html>
