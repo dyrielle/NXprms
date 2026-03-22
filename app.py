@@ -212,8 +212,11 @@ def find_or_create_product(name: str, unit_price: float, qty_seed: int = 0) -> P
     return product
 
 
-def import_inventory_csv(csv_source: Any, overwrite_quantities: bool = True) -> tuple[int, int]:
-    df = pd.read_csv(csv_source)
+def import_inventory_csv(csv_source: Any, overwrite_quantities: bool = True, max_rows: int | None = None) -> tuple[int, int]:
+    read_kwargs: dict[str, Any] = {}
+    if max_rows and max_rows > 0:
+        read_kwargs["nrows"] = int(max_rows)
+    df = pd.read_csv(csv_source, **read_kwargs)
     required = {"ProductName", "quantity", "UnitPrice"}
     if not required.issubset(df.columns):
         raise ValueError("Inventory CSV must contain ProductName, quantity, UnitPrice columns")
@@ -259,8 +262,16 @@ def import_inventory_csv(csv_source: Any, overwrite_quantities: bool = True) -> 
     return created, updated
 
 
-def import_sales_csv(csv_source: Any, cashier_id: int, source_name: str = "sales.csv") -> tuple[int, int, int]:
-    df = pd.read_csv(csv_source)
+def import_sales_csv(
+    csv_source: Any,
+    cashier_id: int,
+    source_name: str = "sales.csv",
+    max_rows: int | None = None,
+) -> tuple[int, int, int]:
+    read_kwargs: dict[str, Any] = {}
+    if max_rows and max_rows > 0:
+        read_kwargs["nrows"] = int(max_rows)
+    df = pd.read_csv(csv_source, **read_kwargs)
     required = {"ProductName", "quantity", "UnitPrice", "Date", "Time"}
     if not required.issubset(df.columns):
         raise ValueError("Sales CSV must contain ProductName, quantity, UnitPrice, Date, Time columns")
@@ -1259,6 +1270,11 @@ def import_data():
         reset_sales = request.form.get("reset_sales") == "on"
         inventory_file = request.files.get("inventory_file")
         sales_file = request.files.get("sales_file")
+        inventory_max_rows_raw = request.form.get("inventory_max_rows", "5000").strip()
+        sales_max_rows_raw = request.form.get("sales_max_rows", "10000").strip()
+
+        inventory_max_rows = int(inventory_max_rows_raw) if inventory_max_rows_raw else None
+        sales_max_rows = int(sales_max_rows_raw) if sales_max_rows_raw else None
 
         try:
             created = 0
@@ -1274,10 +1290,18 @@ def import_data():
                     inventory_source = inventory_file
                     inventory_source_label = inventory_file.filename
                 else:
+                    if not Path(inventory_path).exists():
+                        raise FileNotFoundError(
+                            "Inventory source not found. Upload a CSV file or provide a valid server file path."
+                        )
                     inventory_source = inventory_path
                     inventory_source_label = inventory_path
 
-                created, updated = import_inventory_csv(inventory_source, overwrite_quantities=overwrite_inventory)
+                created, updated = import_inventory_csv(
+                    inventory_source,
+                    overwrite_quantities=overwrite_inventory,
+                    max_rows=inventory_max_rows,
+                )
 
             if import_type in {"sales", "both"}:
                 if reset_sales:
@@ -1291,6 +1315,10 @@ def import_data():
                     sales_source = sales_file
                     sales_source_label = sales_file.filename
                 else:
+                    if not Path(sales_path).exists():
+                        raise FileNotFoundError(
+                            "Sales source not found. Upload a CSV file or provide a valid server file path."
+                        )
                     sales_source = sales_path
                     sales_source_label = Path(sales_path).name
 
@@ -1298,6 +1326,7 @@ def import_data():
                     sales_source,
                     cashier_id=current_user.id,
                     source_name=sales_source_label,
+                    max_rows=sales_max_rows,
                 )
 
             write_audit(
@@ -1307,17 +1336,23 @@ def import_data():
                     f"Sales file={sales_file.filename if sales_file and sales_file.filename else sales_path}; "
                     f"products_created={created}; products_updated={updated}; "
                     f"sales_imported={imported_sales}; items_imported={imported_items}; "
-                    f"sales_duplicates_skipped={skipped_duplicates}; reset_sales={reset_sales}"
+                    f"sales_duplicates_skipped={skipped_duplicates}; reset_sales={reset_sales}; "
+                    f"inventory_max_rows={inventory_max_rows}; sales_max_rows={sales_max_rows}"
                 ),
             )
             db.session.commit()
             if import_type == "inventory":
-                flash(f"Inventory import successful: {created} new products, {updated} updated products.", "success")
+                limit_note = f" (max rows: {inventory_max_rows})" if inventory_max_rows else ""
+                flash(
+                    f"Inventory import successful: {created} new products, {updated} updated products{limit_note}.",
+                    "success",
+                )
             elif import_type == "sales":
+                limit_note = f" (max rows: {sales_max_rows})" if sales_max_rows else ""
                 flash(
                     (
                         f"Sales import successful: {imported_sales} sales rows loaded, "
-                        f"{skipped_duplicates} duplicates skipped."
+                        f"{skipped_duplicates} duplicates skipped{limit_note}."
                     ),
                     "success",
                 )
@@ -1325,7 +1360,8 @@ def import_data():
                 flash(
                     (
                         f"Import successful: {created} new products, {updated} updated products, "
-                        f"{imported_sales} sales rows loaded, {skipped_duplicates} duplicates skipped."
+                        f"{imported_sales} sales rows loaded, {skipped_duplicates} duplicates skipped "
+                        f"(inventory max rows: {inventory_max_rows or 'all'}, sales max rows: {sales_max_rows or 'all'})."
                     ),
                     "success",
                 )

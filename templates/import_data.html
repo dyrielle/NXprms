@@ -24,6 +24,11 @@
                     <input type="checkbox" name="overwrite_inventory" checked />
                     <span>Overwrite existing product quantities</span>
                 </label>
+
+                <div class="form-group">
+                    <label for="inventory_max_rows">Max rows for demo import</label>
+                    <input type="number" id="inventory_max_rows" name="inventory_max_rows" value="5000" min="1" />
+                </div>
                 
                 <p style="font-size: 0.85rem; color: #888; margin: 8px 0 0 0;">
                     Loads products, stock levels, and pricing from your inventory CSV.
@@ -54,6 +59,11 @@
                     <input type="checkbox" name="reset_sales" checked />
                     <span>Clear existing sales before import</span>
                 </label>
+
+                <div class="form-group">
+                    <label for="sales_max_rows">Max rows for demo import</label>
+                    <input type="number" id="sales_max_rows" name="sales_max_rows" value="10000" min="1" />
+                </div>
                 
                 <p style="font-size: 0.85rem; color: #888; margin: 8px 0 0 0;">
                     Loads transaction history, revenue, and customer data from your sales CSV.
@@ -85,6 +95,7 @@
             <li>Ensure CSV files are properly formatted with headers in the first row</li>
             <li>Required inventory columns: ProductName, quantity, UnitPrice</li>
             <li>Required sales columns: ProductName, quantity, UnitPrice, Date, Time</li>
+            <li>For Railway demo imports, use max-row limits to avoid request timeout on very large CSV files</li>
             <li>Import process will validate data before committing to database</li>
         </ul>
     </div>
